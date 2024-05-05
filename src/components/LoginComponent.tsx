@@ -19,13 +19,8 @@ const LoginComponent: React.FC = () => {
   const token = useSelector((state: LoginState) => state.token);
 
   useEffect(() => {
-      // console.log("Token: ", token);
-      // if (token) {
-        // navigate('/video');
-      // } else {
-        // console.log("Login failed");
-    // }
-   }, [navigate, token]); // Include navigate in the dependency array if neede
+
+   }, [navigate, token]); 
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value);

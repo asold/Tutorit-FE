@@ -4,7 +4,8 @@ import VideoCallReceiver from './videoCalls/VideoCallReceiver.tsx';
 import { useSelector } from 'react-redux';
 
 const VideoCallPage = () => {
-    const token = useSelector((state:any) => state.auth.token);
+    // const token = useSelector((state:any) => state.auth.token);
+    const token = localStorage.getItem('token');
 
 
     return (
