@@ -1,14 +1,22 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { MessagePackHubProtocol } from '@microsoft/signalr-protocol-msgpack';
+import { ThunkDispatch } from 'redux-thunk';
+import { AnyAction } from 'redux';
+import { useDispatch, useSelector } from 'react-redux';
 
-const VideoCallReceiver = ({ token }) => {
+const VideoCallReceiver = ({ token, onReceiveCall }) => {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const [connection, setConnection] = useState<HubConnection | null>(null);
     const mediaSourceRef = useRef<MediaSource | null>(new MediaSource());
     const sourceBufferRef = useRef< SourceBuffer | null>(null);
     const [error, setError] = useState('');
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [callReceived, setCallReceived] = useState(false);
+    const callIsActive = useSelector((state:any) => state.videoCall.accepted); // this will track if user accepted the call 
+    const [bufferQueue, setBufferQueue] = useState([]);
+    
+
 
     const setupMediaSource = useCallback(() => {
         if (!videoRef.current || !window.MediaSource) {
@@ -26,12 +34,21 @@ const VideoCallReceiver = ({ token }) => {
                     const sourceBuffer = mediaSourceRef.current.addSourceBuffer('video/webm; codecs="vp8"');
                     sourceBufferRef.current = sourceBuffer;
                     console.log("Media source and source buffer are ready");
+                    sourceBuffer.addEventListener('updateend', () => {
+                        if (bufferQueue.length > 0 && !sourceBuffer.updating) {
+                            const nextData = bufferQueue.shift();
+                            if(nextData){
+                                sourceBuffer.appendBuffer(nextData);
+                                setBufferQueue([...bufferQueue]); // Update queue state
+                            }
+                        }
+                    });
                 }
             } catch (e) {
                 console.error('Error creating source buffer:', e);
             }
         }, { once: true });
-    }, []);
+    }, [bufferQueue]);
 
     useEffect(() => {
 
@@ -87,21 +104,32 @@ const VideoCallReceiver = ({ token }) => {
         if (!connection || !mediaSourceRef.current) return;
 
         const receiveVideoStream = (fromUser, data) => {
-            if (mediaSourceRef.current && sourceBufferRef.current) {
-                if (mediaSourceRef.current.readyState === 'open' && !sourceBufferRef.current.updating) {
-                    sourceBufferRef.current.appendBuffer(data);
-                    if (timeoutRef.current) {
-                        clearTimeout(timeoutRef.current);
-                    }
-                    timeoutRef.current = setTimeout(() => {
-                        if (mediaSourceRef.current && sourceBufferRef.current) {
-                            mediaSourceRef.current.endOfStream();
-                            mediaSourceRef.current.removeSourceBuffer(sourceBufferRef.current);
-                            setupMediaSource();
+            console.log('CALL IS ACTIVE VALUE:', callIsActive)
+
+            if (!callReceived) {
+                console.log('CALL IS ACTIVE VALUE:', callIsActive)
+                onReceiveCall();
+                console.log('AAAAAAAAAAAAAAAA receive video stream called AAAAAAAAAAAAAAAA');
+                setCallReceived(true);
+            }
+            
+            if(callIsActive){
+                if (mediaSourceRef.current && sourceBufferRef.current) {
+                    if (mediaSourceRef.current.readyState === 'open' && !sourceBufferRef.current.updating) {
+                        sourceBufferRef.current.appendBuffer(data);
+                        if (timeoutRef.current) {
+                            clearTimeout(timeoutRef.current);
                         }
-                    }, 3000);
-                } else {
-                    console.log("Buffer is currently updating or not ready.");
+                        timeoutRef.current = setTimeout(() => {
+                            if (mediaSourceRef.current && sourceBufferRef.current) {
+                                mediaSourceRef.current.endOfStream();
+                                mediaSourceRef.current.removeSourceBuffer(sourceBufferRef.current);
+                                setupMediaSource();
+                            }
+                        }, 3000);
+                    } else {
+                        console.log("Buffer is currently updating or not ready.");
+                    }
                 }
             }
         };
@@ -111,7 +139,7 @@ const VideoCallReceiver = ({ token }) => {
         return () => {
             connection.off('ReceiveVideoStream', receiveVideoStream);
         };
-    }, [connection]);
+    }, [connection, callReceived, onReceiveCall, callIsActive]);
 
     
     return (
