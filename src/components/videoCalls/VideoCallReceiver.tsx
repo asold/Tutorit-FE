@@ -14,7 +14,8 @@ const VideoCallReceiver = ({ token, onReceiveCall }) => {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [callReceived, setCallReceived] = useState(false);
     const callIsActive = useSelector((state:any) => state.videoCall.accepted); // this will track if user accepted the call 
-    const [bufferQueue, setBufferQueue] = useState([]);
+    const [bufferReady, setBufferReady] = useState(false);
+    
     
 
 
@@ -34,21 +35,12 @@ const VideoCallReceiver = ({ token, onReceiveCall }) => {
                     const sourceBuffer = mediaSourceRef.current.addSourceBuffer('video/webm; codecs="vp8"');
                     sourceBufferRef.current = sourceBuffer;
                     console.log("Media source and source buffer are ready");
-                    sourceBuffer.addEventListener('updateend', () => {
-                        if (bufferQueue.length > 0 && !sourceBuffer.updating) {
-                            const nextData = bufferQueue.shift();
-                            if(nextData){
-                                sourceBuffer.appendBuffer(nextData);
-                                setBufferQueue([...bufferQueue]); // Update queue state
-                            }
-                        }
-                    });
                 }
             } catch (e) {
                 console.error('Error creating source buffer:', e);
             }
         }, { once: true });
-    }, [bufferQueue]);
+    }, []);
 
     useEffect(() => {
 
@@ -107,9 +99,7 @@ const VideoCallReceiver = ({ token, onReceiveCall }) => {
             console.log('CALL IS ACTIVE VALUE:', callIsActive)
 
             if (!callReceived) {
-                console.log('CALL IS ACTIVE VALUE:', callIsActive)
                 onReceiveCall();
-                console.log('AAAAAAAAAAAAAAAA receive video stream called AAAAAAAAAAAAAAAA');
                 setCallReceived(true);
             }
             
@@ -121,10 +111,13 @@ const VideoCallReceiver = ({ token, onReceiveCall }) => {
                             clearTimeout(timeoutRef.current);
                         }
                         timeoutRef.current = setTimeout(() => {
-                            if (mediaSourceRef.current && sourceBufferRef.current) {
+                            if (mediaSourceRef.current && sourceBufferRef.current && mediaSourceRef.current.readyState === 'open') {
                                 mediaSourceRef.current.endOfStream();
                                 mediaSourceRef.current.removeSourceBuffer(sourceBufferRef.current);
                                 setupMediaSource();
+                            }
+                            else{
+                                console.log("Attempted to end stream but MediaSource is not 'open'");
                             }
                         }, 3000);
                     } else {
