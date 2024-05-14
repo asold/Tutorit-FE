@@ -31,6 +31,7 @@ const VideoInteraction = ({ token }) => {
                 .withHubProtocol(new MessagePackHubProtocol())
                 .build();
 
+
             connect.start().then(() => {
                 console.log('SignalR connection established in Sender');
                 setConnection(connect);
