@@ -1,14 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { MessagePackHubProtocol } from '@microsoft/signalr-protocol-msgpack';
+import { useDispatch } from 'react-redux';
+import { AnyAction } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { setReceiverConnectionId } from '../../actions/videoActions/videoActions.ts';
 
 const VideoCallReceiver = ({ token }) => {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const [connection, setConnection] = useState<HubConnection | null>(null);
     const mediaSourceRef = useRef<MediaSource | null>(new MediaSource());
-    const sourceBufferRef = useRef< SourceBuffer | null>(null);
+    const sourceBufferRef = useRef<SourceBuffer | null>(null);
     const [error, setError] = useState('');
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const dispatch: ThunkDispatch<any, any, AnyAction> = useDispatch();
 
     const setupMediaSource = useCallback(() => {
         if (!videoRef.current || !window.MediaSource) {
@@ -16,17 +21,15 @@ const VideoCallReceiver = ({ token }) => {
             return;
         }
 
-        let mediaSource = new MediaSource();
+        const mediaSource = new MediaSource();
         mediaSourceRef.current = mediaSource;
         videoRef.current.src = URL.createObjectURL(mediaSource);
 
-        mediaSourceRef.current.addEventListener('sourceopen', () => {
+        mediaSource.addEventListener('sourceopen', () => {
             try {
-                if (mediaSourceRef.current) {
-                    const sourceBuffer = mediaSourceRef.current.addSourceBuffer('video/webm; codecs="vp8"');
-                    sourceBufferRef.current = sourceBuffer;
-                    console.log("Media source and source buffer are ready");
-                }
+                const sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp8"');
+                sourceBufferRef.current = sourceBuffer;
+                console.log("Media source and source buffer are ready");
             } catch (e) {
                 console.error('Error creating source buffer:', e);
             }
@@ -34,14 +37,13 @@ const VideoCallReceiver = ({ token }) => {
     }, []);
 
     useEffect(() => {
-
         if (!window.MediaSource) {
             setError('MediaSource API is not supported in your browser.');
             return;
         }
 
         const connect = new HubConnectionBuilder()
-            .withUrl(`http://localhost:8000/hub?userToken=${encodeURIComponent(token)}`)
+            .withUrl(`http://localhost:8000/hub?userToken=${encodeURIComponent(token)}&connectionType=${1}`)
             .withAutomaticReconnect()
             .withHubProtocol(new MessagePackHubProtocol())
             .configureLogging(LogLevel.Information)
@@ -52,6 +54,12 @@ const VideoCallReceiver = ({ token }) => {
                 await connect.start();
                 console.log('Receiver SignalR connection established');
                 setConnection(connect);
+
+                // Dispatch action to set the connection ID
+                if (connect.connectionId) {
+                    dispatch(setReceiverConnectionId(connect.connectionId));
+                }
+
                 setupMediaSource(); // Setup media source on successful connection
             } catch (err) {
                 console.error('Error while establishing SignalR connection:', err);
@@ -59,7 +67,7 @@ const VideoCallReceiver = ({ token }) => {
         };
 
         startConnection();
-        
+
         const keepAliveInterval = setInterval(() => {
             if (connect.state === 'Connected') {
                 connect.invoke("KeepAlive").catch(err => console.error("KeepAlive error:", err));
@@ -81,7 +89,7 @@ const VideoCallReceiver = ({ token }) => {
                 mediaSourceRef.current = null;
             }
         };
-    }, [token, setupMediaSource]);
+    }, [token, setupMediaSource, dispatch]);
 
     useEffect(() => {
         if (!connection || !mediaSourceRef.current) return;
@@ -111,9 +119,8 @@ const VideoCallReceiver = ({ token }) => {
         return () => {
             connection.off('ReceiveVideoStream', receiveVideoStream);
         };
-    }, [connection]);
+    }, [connection, setupMediaSource]);
 
-    
     return (
         <div>
             {error ? (
@@ -127,7 +134,6 @@ const VideoCallReceiver = ({ token }) => {
             )}
         </div>
     );
-    
 };
 
 export default VideoCallReceiver;

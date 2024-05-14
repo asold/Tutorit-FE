@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { sendVideoChunk } from '../../actions/videoActions/videoActions.ts';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
@@ -25,7 +24,7 @@ const VideoInteraction = ({token}) => {
       setIsConnecting(true);
       const userToken = encodeURIComponent(token);
       const connect = new HubConnectionBuilder()
-        .withUrl(`http://localhost:8000/hub?userToken=${userToken}`)
+        .withUrl(`http://localhost:8000/hub?userToken=${encodeURIComponent(token)}&connectionType=${0}`)
         .withAutomaticReconnect()
         .withHubProtocol(new MessagePackHubProtocol())
         .build();
@@ -83,7 +82,7 @@ const VideoInteraction = ({token}) => {
       setIsRecording(false);
     };
 
-    recorder.start(1);
+    recorder.start(100);
     setMediaRecorder(recorder);
   }, [connection, callPartnerUsername]);
 
