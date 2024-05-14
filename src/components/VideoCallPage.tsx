@@ -17,7 +17,7 @@ const VideoCallPage = () => {
     const receiverConnectionId = useSelector((state: any) => state.receiver.receiverConnectionId);
 
     const handleCallAccepted = async () => {
-        await dispatch(acceptCall(receiverConnectionId));
+        // await dispatch(acceptCall(receiverConnectionId));
         setShowModal(false);
     };
 

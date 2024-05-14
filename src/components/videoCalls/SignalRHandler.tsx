@@ -7,9 +7,9 @@ const SignalRHandler = ({ token, onAccept, onDecline }) => {
     const [callReceived, setCallReceived] = useState(false);
     const [connection, setConnection] = useState<HubConnection | null>(null);
     const [showModal, setShowModal] = useState(false);
+    const [key, setKey] = useState(0); // Add a key state to force re-render
 
     useEffect(() => {
-
         const connect = new HubConnectionBuilder()
             .withUrl(`http://localhost:8000/hub?userToken=${encodeURIComponent(token)}&connectionType=${2}`)
             .withAutomaticReconnect()
@@ -49,9 +49,6 @@ const SignalRHandler = ({ token, onAccept, onDecline }) => {
     useEffect(() => {
         if (connection && !callReceived) {
             const handleAcceptCallRequest = () => {
-                console.log('QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ');
-
-                console.log('Incoming call request received');
                 setShowModal(true);
                 setCallReceived(true);
             };
@@ -59,22 +56,32 @@ const SignalRHandler = ({ token, onAccept, onDecline }) => {
             connection.on('acceptcallrequest', handleAcceptCallRequest);
             return () => connection.off('acceptcallrequest', handleAcceptCallRequest);
         }
-        else{
-        }
     }, [connection, callReceived]);
 
     const handleModalAccept = () => {
         onAccept();
         setShowModal(false);
+
+        if (connection) {
+            connection.send('AcceptCallFromReceiver');
+        }
+
+        // Reset the component by updating the key
+        setCallReceived(false);
+        setKey(prevKey => prevKey + 1);
     };
 
     const handleModalDecline = () => {
         onDecline();
         setShowModal(false);
+
+        // Reset the component by updating the key
+        setCallReceived(false);
+        setKey(prevKey => prevKey + 1);
     };
 
     return (
-        <>
+        <div key={key}>
             {showModal && (
                 <CallAcceptanceModal
                     onAccept={handleModalAccept}
@@ -83,7 +90,7 @@ const SignalRHandler = ({ token, onAccept, onDecline }) => {
                     token={token}
                 />
             )}
-        </>
+        </div>
     );
 };
 
