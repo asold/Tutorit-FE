@@ -1,25 +1,40 @@
 import { AnyAction, Dispatch } from 'redux';
 import { ThunkAction } from 'redux-thunk';
 import { HubConnection } from '@microsoft/signalr';
+import { ACCEPT_CALL, DECLINE_CALL } from '../../types/videoCallTypes.ts';
+import axios from 'axios';
 
-export const sendVideoChunk = (
-  chunk: Blob,
-  connection: HubConnection,
-  partnerUsername: string,
-  token: string
-): ThunkAction<void, {}, {}, AnyAction> => async (dispatch: Dispatch) => {
-  if (connection && connection.state === 'Connected') {
-    console.log('Sending chunk of data...', chunk.size, 'bytes');
-    try {
-      // Assuming your server has a method called "SendVideoStream" that expects certain parameters
-      await connection.send('ReceiveVideoStream', partnerUsername, chunk);
-      console.log('Chunk of data sent');
-    } catch (error) {
-      console.error('Error sending video chunk:', error);
-      dispatch({ type: 'VIDEO_UPLOAD_FAILURE', payload: 'Failed to send video chunk' });
-    }
-  } else {
-    console.error('SignalR connection is not open or ready');
-    dispatch({ type: 'VIDEO_UPLOAD_FAILURE', payload: 'SignalR connection is not open or ready' });
-  }
-};
+const token = localStorage.getItem('token');
+
+export const acceptCall = (connectionId: string): ThunkAction<void, {}, {}, AnyAction> => 
+
+    async (dispatch: Dispatch) => {
+
+        try {
+            const response = await axios.post(`http://localhost:8000/tutorit/Call/acceptCall`, 
+            { recipientClientId: connectionId },
+             {
+                headers: {
+                    Authorization: `Bearer ${token}`  // Set the token as Bearer in the Authorization header
+                }
+            });
+
+            if(response.status === 200){
+                dispatch({ type: ACCEPT_CALL });
+            }
+        } catch (error) {
+            console.error("Error in acceptCall:", error);
+        }
+    };
+
+
+
+export const declineCall = (): ThunkAction<void, {}, {}, AnyAction> => async(dispatch:Dispatch)=>{
+    dispatch({type:DECLINE_CALL});
+}
+
+
+export const setReceiverConnectionId = (connectionId:string): ThunkAction<void, {}, {}, AnyAction> => async(dispatch:Dispatch)=>{
+    console.log("ASDASDANDJBWOFIVBIWORNVINWVNWILOERBVIOWRVNIOWERVBUYIR");
+    dispatch({type:'SET_RECEIVER_CONNECTION_ID', payload:connectionId});
+}
