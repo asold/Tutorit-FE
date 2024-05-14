@@ -4,6 +4,7 @@ import { MessagePackHubProtocol } from '@microsoft/signalr-protocol-msgpack';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
+import { setReceiverConnectionId } from '../../actions/videoActions/videoActions.ts';
 
 const VideoCallReceiver = ({ token, onReceiveCall }) => {
     const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -15,53 +16,61 @@ const VideoCallReceiver = ({ token, onReceiveCall }) => {
     const [callReceived, setCallReceived] = useState(false);
     const callIsActive = useSelector((state:any) => state.videoCall.accepted); // this will track if user accepted the call 
     const [bufferReady, setBufferReady] = useState(false);
-    
-    
+    const dispatch: ThunkDispatch<any, any, AnyAction> = useDispatch();
 
 
-    const setupMediaSource = useCallback(() => {
-        if (!videoRef.current || !window.MediaSource) {
+    const initMediaSource = async () => {
+        if (!videoRef.current) {
             setError('MediaSource API is not supported in your browser.');
             return;
         }
 
-        let mediaSource = new MediaSource();
-        mediaSourceRef.current = mediaSource;
-        videoRef.current.src = URL.createObjectURL(mediaSource);
-
-        mediaSourceRef.current.addEventListener('sourceopen', () => {
-            try {
-                if (mediaSourceRef.current) {
-                    const sourceBuffer = mediaSourceRef.current.addSourceBuffer('video/webm; codecs="vp8"');
-                    sourceBufferRef.current = sourceBuffer;
-                    console.log("Media source and source buffer are ready");
-                }
-            } catch (e) {
-                console.error('Error creating source buffer:', e);
+        return new Promise<void>((resolve, reject) => {
+            const mediaSource = new MediaSource();
+            mediaSourceRef.current = mediaSource;
+            if(videoRef.current){
+                videoRef.current.src = URL.createObjectURL(mediaSource);
             }
-        }, { once: true });
-    }, []);
+            mediaSource.onsourceopen = () => {
+                try {
+                    const sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp8"');
+                    sourceBufferRef.current = sourceBuffer;
+                    resolve();
+                } catch (error) {
+                    console.error('Error creating source buffer:', error);
+                    // setError('Error creating source buffer');
+                    reject(error)  
+                }
+            };
+        });
+    };
 
     useEffect(() => {
-
         if (!window.MediaSource) {
             setError('MediaSource API is not supported in your browser.');
             return;
         }
 
         const connect = new HubConnectionBuilder()
-            .withUrl(`http://localhost:8000/hub?userToken=${encodeURIComponent(token)}`)
+            .withUrl(`http://localhost:8000/hub?userToken=${encodeURIComponent(token)}&connectionType=${1}`)
             .withAutomaticReconnect()
             .withHubProtocol(new MessagePackHubProtocol())
             .configureLogging(LogLevel.Information)
             .build();
 
+
+
         const startConnection = async () => {
             try {
                 await connect.start();
-                console.log('Receiver SignalR connection established');
+                console.log('Receiver SignalR connection established', connect.connectionId);
                 setConnection(connect);
-                setupMediaSource(); // Setup media source on successful connection
+                // setupMediaSource(); // Setup media source on successful connection
+
+                if(connect.connectionId){
+                    await dispatch(setReceiverConnectionId(connect.connectionId))
+                }    
+        
             } catch (err) {
                 console.error('Error while establishing SignalR connection:', err);
             }
@@ -77,7 +86,7 @@ const VideoCallReceiver = ({ token, onReceiveCall }) => {
 
         connect.onclose(() => {
             console.log("Connection lost. Attempting to reconnect...");
-            setupMediaSource(); // Ensure fresh setup after reconnection
+            // setupMediaSource(); // Ensure fresh setup after reconnection
         });
 
         return () => {
@@ -90,50 +99,67 @@ const VideoCallReceiver = ({ token, onReceiveCall }) => {
                 mediaSourceRef.current = null;
             }
         };
-    }, [token, setupMediaSource]);
+    }, [ token, dispatch]);
 
     useEffect(() => {
         if (!connection || !mediaSourceRef.current) return;
 
-        const receiveVideoStream = (fromUser, data) => {
-            console.log('CALL IS ACTIVE VALUE:', callIsActive)
+        const receiveVideoStream = async (fromUser, data) => {
 
-            if (!callReceived) {
-                onReceiveCall();
-                setCallReceived(true);
+            if (!mediaSourceRef.current || mediaSourceRef.current.readyState !== 'open' || !sourceBufferRef.current) {
+                console.log("MediaSource is not ready. Reinitializing...");
+                await initMediaSource();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                // return;
             }
-            
-            if(callIsActive){
+
                 if (mediaSourceRef.current && sourceBufferRef.current) {
-                    if (mediaSourceRef.current.readyState === 'open' && !sourceBufferRef.current.updating) {
-                        sourceBufferRef.current.appendBuffer(data);
-                        if (timeoutRef.current) {
-                            clearTimeout(timeoutRef.current);
+                    if (mediaSourceRef.current.readyState === 'open') {
+                        if(!sourceBufferRef.current.updating){
+                            sourceBufferRef.current.appendBuffer(data);
+                            if (timeoutRef.current) {
+                                clearTimeout(timeoutRef.current);
+                            }
+                            timeoutRef.current = setTimeout(() => {
+                                if (mediaSourceRef.current && sourceBufferRef.current) {
+                                    mediaSourceRef.current.endOfStream();
+                                    mediaSourceRef.current.removeSourceBuffer(sourceBufferRef.current);
+                                }
+                            }, 3000);
                         }
-                        timeoutRef.current = setTimeout(() => {
-                            if (mediaSourceRef.current && sourceBufferRef.current && mediaSourceRef.current.readyState === 'open') {
-                                mediaSourceRef.current.endOfStream();
-                                mediaSourceRef.current.removeSourceBuffer(sourceBufferRef.current);
-                                setupMediaSource();
-                            }
-                            else{
-                                console.log("Attempted to end stream but MediaSource is not 'open'");
-                            }
-                        }, 3000);
+                        else{
+                            console.log("Source buffer is updating");
+                        }                            
                     } else {
-                        console.log("Buffer is currently updating or not ready.");
+                        console.log("MediaSourceRef current readyState NOT OPEN, but: " , mediaSourceRef.current.readyState);
+                        
                     }
                 }
-            }
         };
 
-        connection.on('ReceiveVideoStream', receiveVideoStream);
+        connection.on('receivevideostream', receiveVideoStream);
 
         return () => {
-            connection.off('ReceiveVideoStream', receiveVideoStream);
+            connection.off('receivevideostream', receiveVideoStream);
         };
-    }, [connection, callReceived, onReceiveCall, callIsActive]);
+    }, [connection]);
 
+    useEffect(() => {
+        if (!callReceived) {
+
+            const handleAcceptCallRequest = async() => {
+                await initMediaSource();
+                onReceiveCall();
+                setCallReceived(true);
+            };
+
+
+            if (!callReceived && connection) {
+                connection.on('acceptcallrequest', handleAcceptCallRequest);
+                return () => connection.off('acceptcallrequest', handleAcceptCallRequest);
+            }
+    }
+    }, [connection, onReceiveCall, initMediaSource]);
     
     return (
         <div>

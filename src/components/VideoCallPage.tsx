@@ -13,10 +13,11 @@ const VideoCallPage = () => {
     const callAccepted = useSelector((state:any) => state.videoCall.callAccepted);
     const callDeclined = useSelector((state:any) => state.videoCall.callDeclined);
     const dispatch: ThunkDispatch<any, any, AnyAction> = useDispatch();
+    const receiverConnectionId = useSelector((state:any) => state.receiver.receiverConnectionId);
 
 
     const handleCallAccepted = () => {
-        dispatch(acceptCall());
+        dispatch(acceptCall(receiverConnectionId));
         setShowModal(false);
     };
     

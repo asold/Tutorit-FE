@@ -25,7 +25,7 @@ const VideoInteraction = ({token}) => {
       setIsConnecting(true);
       const userToken = encodeURIComponent(token);
       const connect = new HubConnectionBuilder()
-        .withUrl(`http://localhost:8000/hub?userToken=${userToken}`)
+        .withUrl(`http://localhost:8000/hub?userToken=${userToken}&connectionType=${0}`)
         .withAutomaticReconnect()
         .withHubProtocol(new MessagePackHubProtocol())
         .build();
@@ -38,9 +38,12 @@ const VideoInteraction = ({token}) => {
         console.error('Error while establishing SignalR connection:', err);
         setIsConnecting(false);
       });
+
+      
     }
   }, [connection, isConnecting, token]);
 
+  
   useEffect(() => {
     initializeConnection();
     return () => {
@@ -83,7 +86,7 @@ const VideoInteraction = ({token}) => {
       setIsRecording(false);
     };
 
-    recorder.start(1);
+    recorder.start(10);
     setMediaRecorder(recorder);
   }, [connection, callPartnerUsername]);
 

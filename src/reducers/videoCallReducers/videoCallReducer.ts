@@ -8,7 +8,6 @@ const initialState = {
 const videoCallReducer = (state = initialState, action:VideoCallAction) => {
     switch (action.type) {
         case ACCEPT_CALL:
-            console.log("Accepting call in reducer BBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
             return {
                 ...state,
                 accepted: true
