@@ -41,7 +41,7 @@ const VideoCallReceiver = ({ token }) => {
         }
 
         const connect = new HubConnectionBuilder()
-            .withUrl(`http://localhost:8000/hub?userToken=${encodeURIComponent(token)}`)
+            .withUrl(`http://localhost:8000/hub?userToken=${encodeURIComponent(token)}&connectionType=${1}`)
             .withAutomaticReconnect()
             .withHubProtocol(new MessagePackHubProtocol())
             .configureLogging(LogLevel.Information)

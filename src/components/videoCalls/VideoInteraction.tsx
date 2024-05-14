@@ -25,7 +25,7 @@ const VideoInteraction = ({token}) => {
       setIsConnecting(true);
       const userToken = encodeURIComponent(token);
       const connect = new HubConnectionBuilder()
-        .withUrl(`http://localhost:8000/hub?userToken=${userToken}`)
+      .withUrl(`http://localhost:8000/hub?userToken=${encodeURIComponent(token)}&connectionType=${0}`)
         .withAutomaticReconnect()
         .withHubProtocol(new MessagePackHubProtocol())
         .build();
