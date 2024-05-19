@@ -5,10 +5,12 @@ import { ThunkDispatch } from 'redux-thunk';
 import { login } from '../actions/loginActions/loginAction.ts';
 import { useNavigate } from 'react-router-dom';
 import { LoginState } from '../types/loginTypes.ts';
+import { useTranslation } from 'react-i18next';
 
 
 
 const LoginComponent: React.FC = () => {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [tokenChecked, setTokenChecked] = useState(false);
@@ -40,10 +42,10 @@ const LoginComponent: React.FC = () => {
 
   return (
     <div>
-      <h2>Login</h2>
+      <h2>{t('login')}</h2>
       <form onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="username">Username:</label>
+          <label htmlFor="username">{t('username')}:</label>
           <input
             type="text"
             id="username"
@@ -53,7 +55,7 @@ const LoginComponent: React.FC = () => {
           />
         </div>
         <div>
-          <label htmlFor="password">Password:</label>
+          <label htmlFor="password">{t('password')}:</label>
           <input
             type="password"
             id="password"

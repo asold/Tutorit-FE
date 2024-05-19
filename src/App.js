@@ -4,11 +4,13 @@ import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-ro
 
 import LoginComponent  from './components/LoginComponent.tsx';
 import VideoCallPage from './components/VideoCallPage.tsx';
+import LanguageSwitcher from './components/language/LanguageSwitcher.tsx';
 
 function App() {
   return (
     <Router>
     <div>
+      <LanguageSwitcher />
       <Routes>
         <Route path="/login" element={<LoginComponent />} />
         <Route path="/video" element={<VideoCallPage />} />
