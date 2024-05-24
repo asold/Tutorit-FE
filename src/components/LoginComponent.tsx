@@ -6,6 +6,7 @@ import { login } from '../actions/loginActions/loginAction.ts';
 import { useNavigate } from 'react-router-dom';
 import { LoginState } from '../types/loginTypes.ts';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@mui/material';
 
 
 
@@ -64,8 +65,17 @@ const LoginComponent: React.FC = () => {
             required
           />
         </div>
-        <button type="submit">Login</button>
+        <br/>
+        <Button 
+          variant='contained'
+          type="submit">Login
+        </Button>
       </form>
+      <br/>
+      <Button 
+        variant="contained"
+        onClick={() => navigate('/register')}>{t('register')}
+      </Button>
     </div>
   );
 };

@@ -2,13 +2,10 @@ import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { ThunkDispatch } from 'redux-thunk'; 
 import { AnyAction } from 'redux'; 
 
-// Action creator to connect to SignalR server
 export const connectToSignalR = (userToken:string) => {
   return async (dispatch: ThunkDispatch<any, any, AnyAction>) => {
     try {
 
-      console.log(userToken, "userToken in connectToSignalR AAAAAAAAAAA");
-      // Establish connection to SignalR server
       const connection = new HubConnectionBuilder()
         .withUrl(`http://localhost:8000/hub?userToken=${userToken}`) 
         .configureLogging(LogLevel.Information)
