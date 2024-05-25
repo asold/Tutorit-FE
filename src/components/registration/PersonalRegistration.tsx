@@ -1,20 +1,23 @@
-import React, { useState } from "react";
-import { useDispatch } from "react-redux";
-import { Avatar, Box, Button, Grid, TextField, Typography } from "@mui/material";
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { Avatar, Box, Button, Grid, TextField, Typography, CircularProgress } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import FaceIcon from '@mui/icons-material/Face';
 import PersonIcon from '@mui/icons-material/Person';
-import { useNavigate } from "react-router-dom";
-import { addPersonalInfo } from "../../actions/registration/registrationActions.ts";
+import { useNavigate } from 'react-router-dom';
+import { addPersonalInfo } from '../../actions/registration/registrationActions.ts';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
+import useEmailValidation from '../../hooks/useEmailValidation.ts';
 
 const PersonalRegistration: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [photo, setPhoto] = useState('');
+
+  const { isEmailValid, isChecking, error } = useEmailValidation(email);
 
   const navigate = useNavigate();
   const dispatch: ThunkDispatch<any, any, AnyAction> = useDispatch();
@@ -34,7 +37,7 @@ const PersonalRegistration: React.FC = () => {
     setPhoto(icon);
   };
 
-  const isFormComplete = firstName && lastName && email && photo;
+  const isFormComplete = firstName && lastName && email && photo && isEmailValid;
 
   return (
     <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
@@ -74,7 +77,10 @@ const PersonalRegistration: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  error={!!error}
+                  helperText={error}
                 />
+                {isChecking && <CircularProgress size={24} />}
               </Box>
               <Box mb={1} textAlign="center">
                 <Button

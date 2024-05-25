@@ -8,7 +8,7 @@ export const rootReducer = combineReducers({
     auth:loginReducer,
     videoCall:videoCallReducer,
     receiver:receiverConnectionIdReducer,
-    registration:registrationReducer
+    registration:registrationReducer,
 });
 
 export default rootReducer;
