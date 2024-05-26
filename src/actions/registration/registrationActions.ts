@@ -11,12 +11,15 @@ const addedPersonalInfo = (userInfo:UserDto):any => {
     };
 };
 
+
+
 export const addPersonalInfo =  (firstName: string, lastName: string, email:string, photoUrl:string,  navigate: () => void ):
     ThunkAction<void, any, unknown, RegistrationAction> => 
         async (dispatch:Dispatch) => {{
             try{
                 const userDto = {firstName, lastName, email, photoUrl};
-                dispatch(addedPersonalInfo(userDto));
+                // dispatch(addedPersonalInfo(userDto));
+                localStorage.setItem('userDto', JSON.stringify(userDto));
                 navigate();
             }
             catch(error){
@@ -24,26 +27,46 @@ export const addPersonalInfo =  (firstName: string, lastName: string, email:stri
     }
 }
 
-export const registerUser = (username: string, password: string, role: string, personalInfo: UserDto, navigate: () => void): ThunkAction<void, any, unknown, RegistrationAction> => 
-    async (dispatch: Dispatch) => {
+  export const register = ( username: string, password: string, role: string,navigate: () => void): ThunkAction<void, any, unknown, any> => {
+    return async (dispatch: Dispatch) => {
+      let personalInfo: UserDto | null = null;
+  
+      const personalInfoString = localStorage.getItem('userDto');
+      if (personalInfoString) {
+        try {
+          personalInfo = JSON.parse(personalInfoString) as UserDto;
+          console.log('Personal info:', personalInfo);
+        } catch (error) {
+          console.error('Failed to parse personalInfo from localStorage', error);
+          return;
+        }
+      }
+  
+      if (!personalInfo) {
+        console.error('Personal info is missing');
+        return;
+      }
       try {
-
         const roleInt = Number(role);
-        const accountDto = { username, password, roleInt };
-
-        const response = await axios.post(`http://localhost:8000/tutorit/User/registration`, { accountDto, userDto: personalInfo });
-
-        console.log("AAAAAAAA")
-        console.log(response.status);
+        const accountDto = { username, password, role: roleInt };
   
-        // if (response.data === "Username already exists") {
-        //   return;
-        // }
+        const response = await axios.post('http://localhost:8000/tutorit/User/registration', {
+          accountDto,
+          userDto: personalInfo
+        });
   
-        // dispatch({ type: ADD_ACCOUNT_INFO_SUCCESS, payload: accountDto });
-        // navigate();
+        console.log('Response:', response);
+  
+        if (response.status === 200) {
+          navigate();
+        }
+  
       } catch (error) {
         console.error(error);
       }
+  
     };
+  };
+
+
 

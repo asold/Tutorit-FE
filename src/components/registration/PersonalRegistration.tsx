@@ -1,43 +1,38 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { Avatar, Box, Button, Grid, TextField, Typography, CircularProgress } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import FaceIcon from '@mui/icons-material/Face';
 import PersonIcon from '@mui/icons-material/Person';
 import { useNavigate } from 'react-router-dom';
-import { addPersonalInfo } from '../../actions/registration/registrationActions.ts';
-import { ThunkDispatch } from 'redux-thunk';
-import { AnyAction } from 'redux';
 import useEmailValidation from '../../hooks/useEmailValidation.ts';
 
 const PersonalRegistration: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [photo, setPhoto] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
 
   const { isEmailValid, isChecking, error } = useEmailValidation(email);
 
   const navigate = useNavigate();
-  const dispatch: ThunkDispatch<any, any, AnyAction> = useDispatch();
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPhoto(reader.result as string);
+        setPhotoUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleAvatarSelect = (icon: string) => {
-    setPhoto(icon);
+    setPhotoUrl(icon);
   };
 
-  const isFormComplete = firstName && lastName && email && photo && isEmailValid;
+  const isFormComplete = firstName && lastName && email && photoUrl && isEmailValid;
 
   return (
     <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
@@ -105,7 +100,7 @@ const PersonalRegistration: React.FC = () => {
                   <Grid item>
                     <Avatar
                       onClick={() => handleAvatarSelect('/icons/astronaut.png')}
-                      src={photo === '/icons/astronaut.png' ? photo : undefined}
+                      src={photoUrl === '/icons/astronaut.png' ? photoUrl : undefined}
                       sx={{ width: 56, height: 56, cursor: 'pointer' }}
                     >
                       <AccountCircleIcon />
@@ -114,7 +109,7 @@ const PersonalRegistration: React.FC = () => {
                   <Grid item>
                     <Avatar
                       onClick={() => handleAvatarSelect('/icons/teenager.png')}
-                      src={photo === '/icons/teenager.png' ? photo : undefined}
+                      src={photoUrl === '/icons/teenager.png' ? photoUrl : undefined}
                       sx={{ width: 56, height: 56, cursor: 'pointer' }}
                     >
                       <FaceIcon />
@@ -123,7 +118,7 @@ const PersonalRegistration: React.FC = () => {
                   <Grid item>
                     <Avatar
                       onClick={() => handleAvatarSelect('/icons/unicorn.png')}
-                      src={photo === '/icons/unicorn.png' ? photo : undefined}
+                      src={photoUrl === '/icons/unicorn.png' ? photoUrl : undefined}
                       sx={{ width: 56, height: 56, cursor: 'pointer' }}
                     >
                       <PersonIcon />
@@ -132,9 +127,9 @@ const PersonalRegistration: React.FC = () => {
                 </Grid>
               </Box>
             </Box>
-            {photo && !photo.startsWith('/icons') && (
+            {photoUrl && !photoUrl.startsWith('/icons') && (
               <Box display="flex" justifyContent="center" alignItems="center" sx={{ width: 300, height: 100 }}>
-                <Avatar src={photo} sx={{ width: 100, height: 100 }} />
+                <Avatar src={photoUrl} sx={{ width: 100, height: 100 }} />
               </Box>
             )}
           </form>
@@ -145,9 +140,9 @@ const PersonalRegistration: React.FC = () => {
               variant="contained"
               color="primary"
               onClick={() => {
-                dispatch(addPersonalInfo(firstName, lastName, email, photo, () => {
-                  navigate('/user-creation');
-                }));
+                const userDto = { firstName, lastName, email, photoUrl };
+                localStorage.setItem('userDto', JSON.stringify(userDto));
+                navigate('/user-creation');
               }}
             >
               Next

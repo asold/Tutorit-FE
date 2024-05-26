@@ -1,4 +1,4 @@
-import RegistrationAction, { ADD_ACCOUNT_INFO_SUCCESS, ADD_PERSONAL_INFO_SUCCESS, RegistrationObject } from "../../types/regTypes.ts";
+import RegistrationAction, { ADD_ACCOUNT_INFO_SUCCESS, ADD_PERSONAL_INFO_SUCCESS, RegistrationObject, USERNAME_EXISTS } from "../../types/regTypes.ts";
 
 const initialState: RegistrationObject = {
   account: {

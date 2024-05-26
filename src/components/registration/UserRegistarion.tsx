@@ -1,10 +1,11 @@
-import React, { useState } from "react";
-import { Box, Button, FormControl, FormControlLabel, Radio, RadioGroup, TextField, Typography } from "@mui/material";
-import { ThunkDispatch } from "redux-thunk";
-import { AnyAction } from "redux";
-import { useDispatch, useSelector } from "react-redux";
-import { registerUser } from "../../actions/registration/registrationActions.ts";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { Box, Button, FormControl, FormControlLabel, Radio, RadioGroup, TextField, Typography, CircularProgress } from '@mui/material';
+import { ThunkDispatch } from 'redux-thunk';
+import { AnyAction } from 'redux';
+import { useDispatch } from 'react-redux';
+import {  register } from '../../actions/registration/registrationActions.ts';
+import { useNavigate } from 'react-router-dom';
+import useUsernameValidation from '../../hooks/useUsernameValidation.ts';
 
 const UserRegistration: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -12,19 +13,16 @@ const UserRegistration: React.FC = () => {
   const [repeatPassword, setRepeatPassword] = useState('');
   const [role, setRole] = useState('');
 
-  const personalInfo = useSelector((state: any) => state.registration.user);
-
+  const { isUsernameValid, isChecking, error } = useUsernameValidation(username);
 
   const dispatch: ThunkDispatch<any, any, AnyAction> = useDispatch();
   const navigate = useNavigate();
-
-
 
   const handleRoleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRole((event.target as HTMLInputElement).value);
   };
 
-  const isFormComplete = username && password && repeatPassword && role && password === repeatPassword;
+  const isFormComplete = username && password && repeatPassword && role && password === repeatPassword && isUsernameValid;
 
   return (
     <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
@@ -42,7 +40,10 @@ const UserRegistration: React.FC = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
+                error={!!error}
+                helperText={error}
               />
+              {isChecking && <CircularProgress size={24} />}
             </Box>
             <Box mb={1} width="300px">
               <TextField
@@ -75,28 +76,26 @@ const UserRegistration: React.FC = () => {
                 </Typography>
                 <RadioGroup value={role} onChange={handleRoleChange}>
                   <FormControlLabel value="1" control={<Radio />} label="Student" />
-                  <FormControlLabel value='0' control={<Radio />} label="Teacher" />
+                  <FormControlLabel value="0" control={<Radio />} label="Teacher" />
                 </RadioGroup>
               </FormControl>
             </Box>
           </Box>
           <Box mt={2} textAlign="center">
+
             <Button
               variant="contained"
               color="primary"
-              type="submit"
               disabled={!isFormComplete}
 
-
               onClick={() => {
-                dispatch(registerUser(username, password, role, personalInfo, () => {
-                  navigate('/user-creation');
+                dispatch(register( username, password, role,() => {
+                  navigate('/login');
                 }));
               }}
-
             >
               Register
-            </Button>
+          </Button>
           </Box>
         </form>
       </Box>

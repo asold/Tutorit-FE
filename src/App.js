@@ -11,17 +11,16 @@ import UserRegistarion from './components/registration/UserRegistarion.tsx';
 function App() {
   return (
     <Router>
-    <div>
-      <LanguageSwitcher />
-      <Routes>
-        <Route path="/login" element={<LoginComponent />} />
-        <Route path="/video" element={<VideoCallPage />} />
-        <Route path="/register" element={<PersonalRegistration />} />
-        <Route path="/user-creation" element={<UserRegistarion/>}/>
-
-        <Route index element= {<Navigate to= "/login"/>}/>
-      </Routes>
-    </div>
+      <div>
+        <LanguageSwitcher />
+        <Routes>
+          <Route path="/login" element={<LoginComponent />} />
+          <Route path="/video" element={<VideoCallPage />} />
+          <Route path="/register" element={<PersonalRegistration />} />
+          <Route path="/user-creation" element={<UserRegistarion />} />
+          <Route index element={<Navigate to="/login" />} />
+        </Routes>
+      </div>
     </Router>
   );
 }

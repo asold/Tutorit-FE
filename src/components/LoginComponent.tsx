@@ -6,7 +6,7 @@ import { login } from '../actions/loginActions/loginAction.ts';
 import { useNavigate } from 'react-router-dom';
 import { LoginState } from '../types/loginTypes.ts';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@mui/material';
+import { Box, Button, TextField, Typography } from '@mui/material';
 
 
 
@@ -41,43 +41,56 @@ const LoginComponent: React.FC = () => {
 
     };
 
-  return (
-    <div>
-      <h2>{t('login')}</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="username">{t('username')}:</label>
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={handleUsernameChange}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="password">{t('password')}:</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={handlePasswordChange}
-            required
-          />
-        </div>
-        <br/>
-        <Button 
-          variant='contained'
-          type="submit">Login
-        </Button>
-      </form>
-      <br/>
-      <Button 
-        variant="contained"
-        onClick={() => navigate('/register')}>{t('register')}
-      </Button>
-    </div>
-  );
-};
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="90vh">
+        <Box display="flex" flexDirection="column" alignItems="center" p={2} border="1px solid #ccc" borderRadius="8px">
+          <Typography variant="h2" gutterBottom>
+            {t('login')}
+          </Typography>
+          <form onSubmit={handleSubmit}>
+            <Box mb={2} width="300px">
+              <TextField
+                label={t('username')}
+                variant="outlined"
+                fullWidth
+                value={username}
+                onChange={handleUsernameChange}
+                required
+              />
+            </Box>
+            <Box mb={2} width="300px">
+              <TextField
+                label={t('password')}
+                variant="outlined"
+                type="password"
+                fullWidth
+                value={password}
+                onChange={handlePasswordChange}
+                required
+              />
+            </Box>
+            <Button 
+              variant='contained'
+              color="primary"
+              type="submit"
+              fullWidth
+            >
+              {t('login')}
+            </Button>
+          </form>
+          <Box mt={2}>
+            <Button 
+              variant="outlined"
+              color="info"
+              onClick={() => navigate('/register')}
+            >
+              {t('register')}
+            </Button>
+          </Box>
+        </Box>
+      </Box>
+    );
+  };
+  
 
 export default LoginComponent;
