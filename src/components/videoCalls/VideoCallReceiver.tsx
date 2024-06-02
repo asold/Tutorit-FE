@@ -4,7 +4,7 @@ import { MessagePackHubProtocol } from '@microsoft/signalr-protocol-msgpack';
 import { useDispatch } from 'react-redux';
 import { AnyAction } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { setReceiverConnectionId } from '../../actions/videoActions/videoActions.ts';
+import { setReceiverConnectionId, setReceivingStatus } from '../../actions/videoActions/videoActions.ts';
 
 const VideoCallReceiver = ({ token }) => {
     const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -14,6 +14,7 @@ const VideoCallReceiver = ({ token }) => {
     const [error, setError] = useState('');
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const dispatch: ThunkDispatch<any, any, AnyAction> = useDispatch();
+    const [hasDispatched, setHasDispatched] = useState(false); // Add this state
 
     const setupMediaSource = useCallback(() => {
         if (!videoRef.current || !window.MediaSource) {
@@ -98,6 +99,13 @@ const VideoCallReceiver = ({ token }) => {
             if (mediaSourceRef.current && sourceBufferRef.current) {
                 if (mediaSourceRef.current.readyState === 'open' && !sourceBufferRef.current.updating) {
                     sourceBufferRef.current.appendBuffer(data);
+
+                    // Set receiving status in Redux store only once
+                    if (!hasDispatched) {
+                        dispatch(setReceivingStatus(true));
+                        setHasDispatched(true); // Update the flag
+                    }
+
                     if (timeoutRef.current) {
                         clearTimeout(timeoutRef.current);
                     }
@@ -119,7 +127,7 @@ const VideoCallReceiver = ({ token }) => {
         return () => {
             connection.off('ReceiveVideoStream', receiveVideoStream);
         };
-    }, [connection, setupMediaSource]);
+    }, [connection, setupMediaSource, dispatch, hasDispatched]);
 
     return (
         <div>

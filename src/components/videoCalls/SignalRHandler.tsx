@@ -52,7 +52,7 @@ const SignalRHandler = ({ token, onAccept, onDecline }) => {
                 setShowModal(true);
                 setCallReceived(true);
             };
-
+            //Step 1: In the receiver showing call.
             connection.on('acceptcallrequest', handleAcceptCallRequest);
             return () => connection.off('acceptcallrequest', handleAcceptCallRequest);
         }
@@ -63,6 +63,7 @@ const SignalRHandler = ({ token, onAccept, onDecline }) => {
         setShowModal(false);
 
         if (connection) {
+            //Step 2: In the receiver accepting call.
             connection.send('AcceptCallFromReceiver');
         }
 

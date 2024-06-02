@@ -6,6 +6,14 @@ import axios from 'axios';
 
 const token = localStorage.getItem('token');
 
+export const SET_RECEIVING_STATUS = 'SET_RECEIVING_STATUS';
+
+export const setReceivingStatus = (isReceiving: boolean) => ({
+    type: SET_RECEIVING_STATUS,
+    payload: isReceiving,
+});
+
+
 export const acceptCall = (connectionId: string): ThunkAction<void, {}, {}, AnyAction> => 
 
     async (dispatch: Dispatch) => {

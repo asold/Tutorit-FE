@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
@@ -17,6 +17,8 @@ const VideoInteraction = ({ token }) => {
     const [receiverCallAccepted, setReceiverCallAccepted] = useState(false);
     const [key, setKey] = useState(0); // Add a key state to force re-render
 
+    const isReceiving = useSelector((state: any) => state.receiver.isReceiving); // Get isReceiving state from Redux
+
     const handlePartnerUsernameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setCallPartnerUsername(e.target.value);
     }, []);
@@ -31,7 +33,6 @@ const VideoInteraction = ({ token }) => {
                 .withHubProtocol(new MessagePackHubProtocol())
                 .build();
 
-
             connect.start().then(() => {
                 console.log('SignalR connection established in Sender');
                 setConnection(connect);
@@ -39,6 +40,7 @@ const VideoInteraction = ({ token }) => {
 
                 // Listen for the 'callaccepted' event
                 connect.on('callaccepted', () => {
+                    //Step 2: Sender informed that call is accepted
                     console.log('Call accepted by receiver');
                     setReceiverCallAccepted(true);
                 });
@@ -116,17 +118,19 @@ const VideoInteraction = ({ token }) => {
 
     const handleStartCameraClick = useCallback(async () => {
         if (connection) {
+            //Step 1 - requesting permission to call
             await connection.send('RequestCallUser', callPartnerUsername); // Custom method on server
         }
     }, [connection, callPartnerUsername]);
 
-    // Effect to start camera when receiverCallAccepted is true
+    // Effect to start camera when receiverCallAccepted or isReceiving is true
     useEffect(() => {
-        if (receiverCallAccepted) {
-            console.log('Starting camera after call accepted');
+        if (receiverCallAccepted || isReceiving) {
+            console.log('Starting camera after call accepted or isReceiving is true');
+            //Step 3: Sender starts sending. 
             startCamera();
         }
-    }, [receiverCallAccepted, startCamera]);
+    }, [receiverCallAccepted, isReceiving, startCamera]);
 
     const handleStopCameraClick = useCallback(async () => {
         console.log('Stop camera click');
@@ -177,7 +181,7 @@ const VideoInteraction = ({ token }) => {
             <div>
                 <label htmlFor="username">Username:</label>
                 <input type="text" id="username" value={callPartnerUsername} onChange={handlePartnerUsernameChange} required />
-                <button onClick={handleStartCameraClick} disabled={isConnecting || isRecording || receiverCallAccepted}>Call Person</button>
+                <button onClick={handleStartCameraClick} disabled={isConnecting || isRecording || receiverCallAccepted || isReceiving}>Call Person</button>
                 <button onClick={handleStopCameraClick} disabled={isConnecting || !isRecording}>Stop Call</button>
             </div>
             <video ref={videoRef} autoPlay playsInline />
