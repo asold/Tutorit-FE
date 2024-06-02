@@ -2,6 +2,7 @@ import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signal
 import { MessagePackHubProtocol } from '@microsoft/signalr-protocol-msgpack';
 import React, { useEffect, useState } from 'react';
 import CallAcceptanceModal from './CallAcceptanceModal.tsx';
+import { SERVER_ADDRESS } from '../../common/constants.ts';
 
 const SignalRHandler = ({ token, onAccept, onDecline }) => {
     const [callReceived, setCallReceived] = useState(false);
@@ -11,7 +12,7 @@ const SignalRHandler = ({ token, onAccept, onDecline }) => {
 
     useEffect(() => {
         const connect = new HubConnectionBuilder()
-            .withUrl(`http://localhost:8000/hub?userToken=${encodeURIComponent(token)}&connectionType=${2}`)
+            .withUrl(`${SERVER_ADDRESS}/hub?userToken=${encodeURIComponent(token)}&connectionType=${2}`)
             .withAutomaticReconnect()
             .withHubProtocol(new MessagePackHubProtocol())
             .configureLogging(LogLevel.Information)

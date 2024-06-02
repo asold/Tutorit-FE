@@ -4,6 +4,7 @@ import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 import { MessagePackHubProtocol } from '@microsoft/signalr-protocol-msgpack';
+import { SERVER_ADDRESS } from '../../common/constants';
 
 const VideoInteraction = ({ token }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -28,7 +29,7 @@ const VideoInteraction = ({ token }) => {
             setIsConnecting(true);
             const userToken = encodeURIComponent(token);
             const connect = new HubConnectionBuilder()
-                .withUrl(`http://localhost:8000/hub?userToken=${encodeURIComponent(token)}&connectionType=${0}`)
+                .withUrl(`${SERVER_ADDRESS}/hub?userToken=${encodeURIComponent(token)}&connectionType=${0}`)
                 .withAutomaticReconnect()
                 .withHubProtocol(new MessagePackHubProtocol())
                 .build();

@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { AnyAction } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { setReceiverConnectionId, setReceivingStatus } from '../../actions/videoActions/videoActions.ts';
+import { SERVER_ADDRESS } from '../../common/constants.ts';
 
 const VideoCallReceiver = ({ token }) => {
     const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -44,7 +45,7 @@ const VideoCallReceiver = ({ token }) => {
         }
 
         const connect = new HubConnectionBuilder()
-            .withUrl(`http://localhost:8000/hub?userToken=${encodeURIComponent(token)}&connectionType=${1}`)
+            .withUrl(`${SERVER_ADDRESS}/hub?userToken=${encodeURIComponent(token)}&connectionType=${1}`)
             .withAutomaticReconnect()
             .withHubProtocol(new MessagePackHubProtocol())
             .configureLogging(LogLevel.Information)
