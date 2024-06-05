@@ -2,7 +2,7 @@ import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signal
 import { MessagePackHubProtocol } from '@microsoft/signalr-protocol-msgpack';
 import React, { useEffect, useState } from 'react';
 import CallAcceptanceModal from './CallAcceptanceModal.tsx';
-import { SERVER_ADDRESS } from '../../common/constants.ts';
+import { SERVER_ADDRESS } from '../../../common/constants.ts';
 
 const SignalRHandler = ({ token, onAccept, onDecline }) => {
     const [callReceived, setCallReceived] = useState(false);

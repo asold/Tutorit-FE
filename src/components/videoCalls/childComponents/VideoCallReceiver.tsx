@@ -4,8 +4,8 @@ import { MessagePackHubProtocol } from '@microsoft/signalr-protocol-msgpack';
 import { useDispatch } from 'react-redux';
 import { AnyAction } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { setReceiverConnectionId, setReceivingStatus } from '../../actions/videoActions/videoActions.ts';
-import { SERVER_ADDRESS } from '../../common/constants.ts';
+import { setReceiverConnectionId, setReceivingStatus } from '../../../actions/videoActions/videoActions.ts';
+import { SERVER_ADDRESS } from '../../../common/constants.ts';
 
 const VideoCallReceiver = ({ token }) => {
     const videoRef = useRef<HTMLVideoElement | null>(null);

@@ -4,7 +4,7 @@ import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 import { MessagePackHubProtocol } from '@microsoft/signalr-protocol-msgpack';
-import { SERVER_ADDRESS } from '../../common/constants';
+import { SERVER_ADDRESS } from '../../../common/constants.ts';
 
 const VideoInteraction = ({ token }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -182,7 +182,7 @@ const VideoInteraction = ({ token }) => {
             <div>
                 <label htmlFor="username">Username:</label>
                 <input type="text" id="username" value={callPartnerUsername} onChange={handlePartnerUsernameChange} required />
-                <button onClick={handleStartCameraClick} disabled={isConnecting || isRecording || receiverCallAccepted || isReceiving}>Call Person</button>
+                <button onClick={handleStartCameraClick} disabled={isConnecting || isRecording || receiverCallAccepted || isReceiving || !callPartnerUsername}>Call Person</button>
                 <button onClick={handleStopCameraClick} disabled={isConnecting || !isRecording}>Stop Call</button>
             </div>
             <video ref={videoRef} autoPlay playsInline />

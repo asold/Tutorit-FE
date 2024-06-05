@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import VideoInteraction from './videoCalls/VideoInteraction.tsx';  // Assuming the initiator is in this file
-import VideoCallReceiver from './videoCalls/VideoCallReceiver.tsx';
-import CallAcceptanceModal from './videoCalls/CallAcceptanceModal.tsx';
+import VideoInteraction from './childComponents/VideoInteraction.tsx';  // Assuming the initiator is in this file
+import VideoCallReceiver from './childComponents/VideoCallReceiver.tsx';
+import CallAcceptanceModal from './childComponents/CallAcceptanceModal.tsx';
 import { useDispatch, useSelector } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
-import { acceptCall } from '../actions/videoActions/videoActions.ts';
-import SignalRHandler from './videoCalls/SignalRHandler.tsx';
+import { acceptCall } from '../../actions/videoActions/videoActions.ts';
+import SignalRHandler from './childComponents/SignalRHandler.tsx';
 
 const VideoCallPage = () => {
     const token = localStorage.getItem('token');
