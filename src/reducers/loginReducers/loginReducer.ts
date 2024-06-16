@@ -2,6 +2,7 @@ import LoginAction, { LOGIN_FAILURE, LOGIN_SUCCESS, LoginState } from "../../typ
 
 const initialState:LoginState = {
     token:null,
+    userId:null,
     error:null
 }
 
@@ -10,10 +11,12 @@ const loginReducer = (state = initialState, action:LoginAction) => {
     switch(action.type){
 
         case LOGIN_SUCCESS:
-            localStorage.setItem('token', action.payload);
+            console.log("Login success", action);
+            localStorage.setItem('token', action.payload.token);
+            localStorage.setItem('userId', action.payload.userId);
             return {
                 ...state,
-                token: action.payload,
+                token: action.payload.token,
                 error:null
             }
         case LOGIN_FAILURE:
