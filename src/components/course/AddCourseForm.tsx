@@ -1,9 +1,11 @@
+// AddCourseForm.tsx
 import React, { useState } from 'react';
 import { Box, TextField, Button, Typography } from '@mui/material';
+import { CourseDto } from '../../types/courseDto.ts';
 import { SERVER_ADDRESS } from '../../common/constants.ts';
 
 interface AddCourseFormProps {
-    onSubmit: (course: Course) => void;
+    onSubmit: (course: CourseDto) => void;
     onClose: () => void;
 }
 
@@ -22,18 +24,11 @@ const AddCourseForm: React.FC<AddCourseFormProps> = ({ onSubmit, onClose }) => {
     const userId = localStorage.getItem('userId');
     const token = localStorage.getItem('token');
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const course: Course = { name, description, language, tutorId:userId };
-        handleAddCourse(course);
-        onSubmit(course);
-        onClose();
-    };
+        const course: Course = { name, description, language, tutorId: userId };
 
-
-    const handleAddCourse = async (course: { name: string; description: string; language: string, tutorId:string | null }) => {
         try {
-
             const response = await fetch(`${SERVER_ADDRESS}/tutorit/Course`, {
                 method: 'POST',
                 headers: {
@@ -43,12 +38,15 @@ const AddCourseForm: React.FC<AddCourseFormProps> = ({ onSubmit, onClose }) => {
                 body: JSON.stringify(course),
             });
 
-            console.log('response:', response);
-
-            if (!response.status.toString().startsWith('2')) {
+            if (!response.ok) {
                 throw new Error('Failed to add course');
             }
 
+            console.log(response, 'response')
+
+            const newCourse: CourseDto = await response.json();
+            onSubmit(newCourse);
+            onClose();
         } catch (error) {
             console.error('Error adding course:', error);
         }
