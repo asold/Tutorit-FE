@@ -37,8 +37,13 @@ const LoginComponent: React.FC = () => {
       e.preventDefault();
       const response = await dispatch(login(username, password));
 
+      console.log(response, "response");
+
       if (response === 'Teacher') {
         navigate('/teacher_main');
+      }
+      if (response === 'Student') {
+        navigate('/video');
       }
 
 

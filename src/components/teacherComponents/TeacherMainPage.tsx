@@ -25,6 +25,10 @@ const TeacherMainPage: React.FC = () => {
 
     const tutorId = localStorage.getItem('userId');
 
+    const navigateToCall = () => {
+        navigate('/video');
+    };
+
     const fetchCourses = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -69,6 +73,12 @@ const TeacherMainPage: React.FC = () => {
                 variant="contained"
             >
                 Create a New Course
+            </Button>
+            <Button 
+                onClick={navigateToCall}
+                variant="contained"
+            >
+                Make a Video Call    
             </Button>
             <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Add New Course</DialogTitle>

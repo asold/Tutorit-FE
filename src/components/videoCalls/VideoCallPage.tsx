@@ -1,7 +1,10 @@
+// src/components/VideoCallPage.js
+
 import React, { useState } from 'react';
 import VideoInteraction from './childComponents/VideoInteraction.tsx';  // Assuming the initiator is in this file
 import VideoCallReceiver from './childComponents/VideoCallReceiver.tsx';
 import CallAcceptanceModal from './childComponents/CallAcceptanceModal.tsx';
+import InteractionBoard from '../boards/InteractionBoard.tsx';
 import { useDispatch, useSelector } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
@@ -25,8 +28,6 @@ const VideoCallPage = () => {
         // setShowModal(false);
     };
 
-
-
     return (
         <div>
             <h1>Video Call Page</h1>
@@ -38,11 +39,17 @@ const VideoCallPage = () => {
             />
 
             <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-                <VideoInteraction token={token} />
-                <VideoCallReceiver token={token} />
+                <div style={{ flex: 1, margin: '0 10px' }}>
+                    <VideoInteraction token={token} />
+                </div>
+                <div style={{ flex: 1, margin: '0 10px' }}>
+                    <VideoCallReceiver token={token} />
+                </div>
             </div>
 
-
+            <div style={{ marginTop: '20px' }}>
+                <InteractionBoard />
+            </div>
         </div>
     );
 };
