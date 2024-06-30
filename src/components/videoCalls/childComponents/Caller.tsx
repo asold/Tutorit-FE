@@ -77,8 +77,9 @@ const Caller = ({ token }) => {
             if (event.data && event.data.size > 0 && connection && connection.state === 'Connected') {
                 const arrayBuffer = await event.data.arrayBuffer();
                 try {
+                        await connection.send(connectionType, callPartnerUsername, new Uint8Array(arrayBuffer));
+                        // await connection.send('SendVideoToSender', new Uint8Array(arrayBuffer));
                         console.log('Chunk of data sent to' , connectionType);
-                        await connection.send(connectionType, new Uint8Array(arrayBuffer));
                 } catch (error) {
                     console.error('Error sending video chunk:', error);
                 }
