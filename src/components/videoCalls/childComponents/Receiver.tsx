@@ -93,21 +93,60 @@ const Receiver = ({ token }) => {
         };
     }, [token, setupMediaSource, dispatch]);
 
+    // useEffect(() => {
+    //     if (!connection || !mediaSourceRef.current) return;
+
+    //     const receiveVideoStream = (fromUser, data) => {
+    //         if (mediaSourceRef.current && sourceBufferRef.current) {
+    //             if (mediaSourceRef.current.readyState === 'open' && !sourceBufferRef.current.updating) {
+    //                 sourceBufferRef.current.appendBuffer(data);
+
+    //                 // Set receiving status in Redux store only once
+    //                 if (!hasDispatched) {
+    //                     dispatch(setReceivingStatus(true));
+    //                     console.log("SET REVEING TO TRUE!!!")
+    //                     setHasDispatched(true); // Update the flag
+    //                 }
+
+    //                 if (timeoutRef.current) {
+    //                     clearTimeout(timeoutRef.current);
+    //                 }
+    //                 timeoutRef.current = setTimeout(() => {
+    //                     if (mediaSourceRef.current && sourceBufferRef.current) {
+    //                         mediaSourceRef.current.endOfStream();
+    //                         mediaSourceRef.current.removeSourceBuffer(sourceBufferRef.current);
+    //                         setupMediaSource();
+    //                     }
+    //                 }, 3000);
+    //             } else {
+    //                 console.log("Buffer is currently updating or not ready.");
+    //             }
+    //         }
+    //     };
+
+    //     connection.on('ReceiveVideoStream', receiveVideoStream);
+
+    //     return () => {
+    //         connection.off('ReceiveVideoStream', receiveVideoStream);
+    //     };
+    // }, [connection, setupMediaSource, dispatch, hasDispatched]);
+
+
     useEffect(() => {
         if (!connection || !mediaSourceRef.current) return;
-
-        const receiveVideoStream = (fromUser, data) => {
+    
+        const handleVideoStream = (fromUser, data) => {
             if (mediaSourceRef.current && sourceBufferRef.current) {
                 if (mediaSourceRef.current.readyState === 'open' && !sourceBufferRef.current.updating) {
                     sourceBufferRef.current.appendBuffer(data);
-
+    
                     // Set receiving status in Redux store only once
                     if (!hasDispatched) {
                         dispatch(setReceivingStatus(true));
-                        console.log("SET REVEING TO TRUE!!!")
+                        console.log("SET RECEIVING TO TRUE!!!");
                         setHasDispatched(true); // Update the flag
                     }
-
+    
                     if (timeoutRef.current) {
                         clearTimeout(timeoutRef.current);
                     }
@@ -123,13 +162,22 @@ const Receiver = ({ token }) => {
                 }
             }
         };
-
-        connection.on('ReceiveVideoStream', receiveVideoStream);
-
+    
+        connection.on('ReceiveVideoStream', handleVideoStream);
+        connection.on('SendBackToSender', handleVideoStream);
+    
         return () => {
-            connection.off('ReceiveVideoStream', receiveVideoStream);
+            connection.off('ReceiveVideoStream', handleVideoStream);
+            connection.off('SendBackToSender', handleVideoStream);
         };
     }, [connection, setupMediaSource, dispatch, hasDispatched]);
+    
+
+
+
+
+
+
 
     return (
         <div>
