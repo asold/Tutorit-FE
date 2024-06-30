@@ -6,7 +6,7 @@ import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 import { MessagePackHubProtocol } from '@microsoft/signalr-protocol-msgpack';
 import { SERVER_ADDRESS } from '../../../common/constants.ts';
 
-const VideoInteraction = ({ token }) => {
+const Caller = ({ token }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
     const [connection, setConnection] = useState<HubConnection | null>(null);
@@ -43,7 +43,7 @@ const VideoInteraction = ({ token }) => {
                 connect.on('callaccepted', () => {
                     //Step 2: Sender informed that call is accepted
                     console.log('Call accepted by receiver');
-                    setReceiverCallAccepted(true);
+                    setReceiverCallAccepted(true); // this starts sending!!
                 });
 
             }).catch(err => {
@@ -190,4 +190,4 @@ const VideoInteraction = ({ token }) => {
     );
 };
 
-export default VideoInteraction;
+export default Caller;

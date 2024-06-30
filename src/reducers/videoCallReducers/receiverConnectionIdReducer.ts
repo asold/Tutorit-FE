@@ -8,6 +8,7 @@ const initialState = {
 const receiverConnectionIdReducer = (state = initialState, action) => {
     switch (action.type) {
         case SET_RECEIVING_STATUS:
+            console.log("RECEIVING IN THE REDUCER! ", state)
             return {
                 ...state,
                 isReceiving: action.payload,

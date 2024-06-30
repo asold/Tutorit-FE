@@ -7,7 +7,7 @@ import { ThunkDispatch } from 'redux-thunk';
 import { setReceiverConnectionId, setReceivingStatus } from '../../../actions/videoActions/videoActions.ts';
 import { SERVER_ADDRESS } from '../../../common/constants.ts';
 
-const VideoCallReceiver = ({ token }) => {
+const Receiver = ({ token }) => {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const [connection, setConnection] = useState<HubConnection | null>(null);
     const mediaSourceRef = useRef<MediaSource | null>(new MediaSource());
@@ -104,6 +104,7 @@ const VideoCallReceiver = ({ token }) => {
                     // Set receiving status in Redux store only once
                     if (!hasDispatched) {
                         dispatch(setReceivingStatus(true));
+                        console.log("SET REVEING TO TRUE!!!")
                         setHasDispatched(true); // Update the flag
                     }
 
@@ -145,4 +146,4 @@ const VideoCallReceiver = ({ token }) => {
     );
 };
 
-export default VideoCallReceiver;
+export default Receiver;

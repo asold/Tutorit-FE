@@ -1,8 +1,8 @@
 // src/components/VideoCallPage.js
 
 import React, { useState } from 'react';
-import VideoInteraction from './childComponents/VideoInteraction.tsx';  // Assuming the initiator is in this file
-import VideoCallReceiver from './childComponents/VideoCallReceiver.tsx';
+import Caller from './childComponents/Caller.tsx';  // Assuming the initiator is in this file
+import Receiver from './childComponents/Receiver.tsx';
 import CallAcceptanceModal from './childComponents/CallAcceptanceModal.tsx';
 import InteractionBoard from '../boards/InteractionBoard.tsx';
 import { useDispatch, useSelector } from 'react-redux';
@@ -40,10 +40,10 @@ const VideoCallPage = () => {
 
             <div style={{ display: 'flex', justifyContent: 'space-around' }}>
                 <div style={{ flex: 1, margin: '0 10px' }}>
-                    <VideoInteraction token={token} />
+                    <Caller token={token} />
                 </div>
                 <div style={{ flex: 1, margin: '0 10px' }}>
-                    <VideoCallReceiver token={token} />
+                    <Receiver token={token} />
                 </div>
             </div>
 
