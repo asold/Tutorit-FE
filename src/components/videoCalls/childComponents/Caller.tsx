@@ -65,7 +65,7 @@ const Caller = ({ token }) => {
         };
     }, [connection, initializeConnection]);
 
-    const startRecording = useCallback((stream) => {
+    const startRecording = useCallback((stream, connectionType) => {
         const options = { mimeType: 'video/webm; codecs=vp8' };
         if (!MediaRecorder.isTypeSupported(options.mimeType)) {
             console.error(`${options.mimeType} is not supported`);
@@ -77,7 +77,7 @@ const Caller = ({ token }) => {
             if (event.data && event.data.size > 0 && connection && connection.state === 'Connected') {
                 const arrayBuffer = await event.data.arrayBuffer();
                 try {
-                    await connection.send('ReceiveVideoStream', callPartnerUsername, new Uint8Array(arrayBuffer));
+                    await connection.send(connectionType, callPartnerUsername, new Uint8Array(arrayBuffer));
                     console.log('Chunk of data sent');
                 } catch (error) {
                     console.error('Error sending video chunk:', error);
@@ -99,7 +99,7 @@ const Caller = ({ token }) => {
         setMediaRecorder(recorder);
     }, [connection, callPartnerUsername]);
 
-    const startCamera = useCallback(async () => {
+    const startCamera = useCallback(async (connectionType) => {
         if (!isRecording) {
             console.log('Attempting to access camera...');
             const constraints = { video: true };
@@ -110,7 +110,7 @@ const Caller = ({ token }) => {
                     videoRef.current.srcObject = stream;
                 }
                 console.log('Camera feed set to video element');
-                startRecording(stream);
+                startRecording(stream, connectionType);
             } catch (error) {
                 console.error('Error accessing camera:', error);
             }
@@ -125,13 +125,32 @@ const Caller = ({ token }) => {
     }, [connection, callPartnerUsername]);
 
     // Effect to start camera when receiverCallAccepted or isReceiving is true
+    // useEffect(() => {
+    //     if (receiverCallAccepted || isReceiving) {
+    //         console.log('Starting camera after call accepted or isReceiving is true');
+    //         //Step 3: Sender starts sending. 
+    //         startCamera();
+    //     }
+    // }, [receiverCallAccepted, isReceiving, startCamera]);
+
     useEffect(() => {
-        if (receiverCallAccepted || isReceiving) {
-            console.log('Starting camera after call accepted or isReceiving is true');
+        if (receiverCallAccepted) {
+            console.log('Starting camera after Call Accepted!!');
             //Step 3: Sender starts sending. 
-            startCamera();
+            startCamera('ReceiveVideoStream');
         }
-    }, [receiverCallAccepted, isReceiving, startCamera]);
+    }, [receiverCallAccepted, startCamera]);
+
+    useEffect(() => {
+        if (isReceiving) {
+            console.log('Starting camera after isReceiving is True!!!');
+            //Step 3: Sender starts sending. 
+            startCamera('SendVideoToSender');
+        }
+    }, [receiverCallAccepted, startCamera]);
+
+
+
 
     const handleStopCameraClick = useCallback(async () => {
         console.log('Stop camera click');
