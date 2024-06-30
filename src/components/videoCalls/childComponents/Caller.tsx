@@ -147,7 +147,7 @@ const Caller = ({ token }) => {
             //Step 3: Sender starts sending. 
             startCamera('SendVideoToSender');
         }
-    }, [receiverCallAccepted, startCamera]);
+    }, [isReceiving, startCamera]);
 
 
 
