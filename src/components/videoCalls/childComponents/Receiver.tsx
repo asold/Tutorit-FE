@@ -163,12 +163,12 @@ const Receiver = ({ token }) => {
             }
         };
     
-        connection.on('ReceiveVideoStream', handleVideoStream);
-        connection.on('SendBackToSender', handleVideoStream);
+        connection.on('receivevideostream', handleVideoStream);
+        connection.on('sendbacktosender', handleVideoStream);
     
         return () => {
-            connection.off('ReceiveVideoStream', handleVideoStream);
-            connection.off('SendBackToSender', handleVideoStream);
+            connection.off('receivevideostream', handleVideoStream);
+            connection.off('sendbacktosender', handleVideoStream);
         };
     }, [connection, setupMediaSource, dispatch, hasDispatched]);
     
