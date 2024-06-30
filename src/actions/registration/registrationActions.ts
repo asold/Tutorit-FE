@@ -2,6 +2,8 @@ import axios from "axios";
 import { Dispatch } from "redux";
 import { ThunkAction } from "redux-thunk";
 import RegistrationAction, { ADD_ACCOUNT_INFO_SUCCESS, UserDto } from "../../types/regTypes.ts";
+import { SERVER_ADDRESS } from '../../common/constants.ts';
+
 
 
 const addedPersonalInfo = (userInfo:UserDto):any => {
@@ -50,7 +52,7 @@ export const addPersonalInfo =  (firstName: string, lastName: string, email:stri
         const roleInt = Number(role);
         const accountDto = { username, password, role: roleInt };
   
-        const response = await axios.post('http://localhost:8000/tutorit/User/registration', {
+        const response = await axios.post(`${SERVER_ADDRESS}/tutorit/User/registration`, {
           accountDto,
           userDto: personalInfo
         });

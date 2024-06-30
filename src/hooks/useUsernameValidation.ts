@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { SERVER_ADDRESS } from '../common/constants.ts';
 
 const usernameRegex = /^[a-zA-Z0-9]+$/;
 
@@ -30,7 +31,7 @@ const useUsernameValidation = (username: string) => {
 
       setIsChecking(true);
       try {
-        const response = await axios.post('http://localhost:8000/tutorit/User/checkUsername', { username });
+        const response = await axios.post(`${SERVER_ADDRESS}/tutorit/User/checkUsername`, { username });
         if (response.status === 200) {
           setIsUsernameValid(true);
           setError(null);
