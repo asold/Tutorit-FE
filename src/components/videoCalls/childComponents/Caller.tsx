@@ -96,7 +96,7 @@ const Caller = ({ token }) => {
             setIsRecording(false);
         };
 
-        recorder.start(1);
+        recorder.start(100);
         setMediaRecorder(recorder);
     }, [connection, callPartnerUsername]);
 
@@ -125,20 +125,13 @@ const Caller = ({ token }) => {
         }
     }, [connection, callPartnerUsername]);
 
-    // Effect to start camera when receiverCallAccepted or isReceiving is true
-    // useEffect(() => {
-    //     if (receiverCallAccepted || isReceiving) {
-    //         console.log('Starting camera after call accepted or isReceiving is true');
-    //         //Step 3: Sender starts sending. 
-    //         startCamera();
-    //     }
-    // }, [receiverCallAccepted, isReceiving, startCamera]);
 
     useEffect(() => {
         if (receiverCallAccepted) {
             console.log('Starting camera after Call Accepted!!');
             //Step 3: Sender starts sending. 
-            startCamera('ReceiveVideoStream');
+            // startCamera('ReceiveVideoStream');
+            startCamera('SendVideoToSender');
         }
     }, [receiverCallAccepted, startCamera]);
 
