@@ -77,9 +77,16 @@ const Caller = ({ token }) => {
             if (event.data && event.data.size > 0 && connection && connection.state === 'Connected') {
                 const arrayBuffer = await event.data.arrayBuffer();
                 try {
-                        await connection.send(connectionType, callPartnerUsername, new Uint8Array(arrayBuffer));
-                        // await connection.send('SendVideoToSender', new Uint8Array(arrayBuffer));
-                        console.log('Chunk of data sent to' , connectionType);
+                        if(connectionType === "ReceiveVideoStream"){
+                            await connection.send('ReceiveVideoStream', callPartnerUsername, new Uint8Array(arrayBuffer));
+                            console.log('Chunk of data sent to' , 'ReceiveVideoStream');
+
+                        }                        
+                        else if(connectionType === "SendVideoToSender"){
+                            await connection.send('SendVideoToSender', callPartnerUsername, new Uint8Array(arrayBuffer), "TESTING");
+                            console.log('Chunk of data sent to' , 'SendVideoToSender');
+
+                        }
                 } catch (error) {
                     console.error('Error sending video chunk:', error);
                 }
@@ -130,8 +137,8 @@ const Caller = ({ token }) => {
         if (receiverCallAccepted) {
             console.log('Starting camera after Call Accepted!!');
             //Step 3: Sender starts sending. 
-            // startCamera('ReceiveVideoStream');
-            startCamera('SendVideoToSender');
+            startCamera('ReceiveVideoStream');
+            // startCamera('SendVideoToSender');
         }
     }, [receiverCallAccepted, startCamera]);
 
