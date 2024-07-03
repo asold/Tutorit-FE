@@ -42,8 +42,11 @@ export const declineCall = (): ThunkAction<void, {}, {}, AnyAction> => async(dis
     dispatch({type:DECLINE_CALL});
 }
 
+export const setInitialCallerUserName = (username:string): ThunkAction<void, {}, {}, AnyAction>=>async(dispatch:Dispatch)=>{
+    dispatch({type:'SET_INITIAL_CALLER_USERNAME', payload:username})
+}
+
 
 export const setReceiverConnectionId = (connectionId:string): ThunkAction<void, {}, {}, AnyAction> => async(dispatch:Dispatch)=>{
-    console.log("ASDASDANDJBWOFIVBIWORNVINWVNWILOERBVIOWRVNIOWERVBUYIR");
     dispatch({type:'SET_RECEIVER_CONNECTION_ID', payload:connectionId});
 }

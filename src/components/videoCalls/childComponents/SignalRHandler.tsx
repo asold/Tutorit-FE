@@ -3,12 +3,19 @@ import { MessagePackHubProtocol } from '@microsoft/signalr-protocol-msgpack';
 import React, { useEffect, useState } from 'react';
 import CallAcceptanceModal from './CallAcceptanceModal.tsx';
 import { SERVER_ADDRESS } from '../../../common/constants.ts';
+import { AnyAction } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { useDispatch } from 'react-redux';
+import { setInitialCallerUserName } from '../../../actions/videoActions/videoActions.ts';
 
 const SignalRHandler = ({ token, onAccept, onDecline }) => {
     const [callReceived, setCallReceived] = useState(false);
     const [connection, setConnection] = useState<HubConnection | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [key, setKey] = useState(0); // Add a key state to force re-render
+    const [callerConnectionid, setCallerConnectionId] = useState("")
+
+    const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
 
     useEffect(() => {
         const connect = new HubConnectionBuilder()
@@ -49,8 +56,9 @@ const SignalRHandler = ({ token, onAccept, onDecline }) => {
 
     useEffect(() => {
         if (connection && !callReceived) {
-            const handleAcceptCallRequest = () => {
+            const handleAcceptCallRequest = (fromUser:string) => {
                 setShowModal(true);
+                setCallerConnectionId(fromUser)
                 setCallReceived(true);
             };
             //Step 1: In the receiver showing call.
@@ -70,6 +78,7 @@ const SignalRHandler = ({ token, onAccept, onDecline }) => {
 
         // Reset the component by updating the key
         setCallReceived(false);
+        dispatch(setInitialCallerUserName(callerConnectionid))
         setKey(prevKey => prevKey + 1);
     };
 

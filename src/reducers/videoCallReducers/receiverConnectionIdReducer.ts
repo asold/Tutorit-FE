@@ -3,6 +3,7 @@ import { SET_RECEIVING_STATUS } from '../../types/videoCallTypes.ts';
 const initialState = {
     receiverConnectionId: "",
     isReceiving: false,
+    initialCallerUserName : "",
 }
 
 const receiverConnectionIdReducer = (state = initialState, action) => {
@@ -17,6 +18,11 @@ const receiverConnectionIdReducer = (state = initialState, action) => {
             return {
                 ...state,
                 receiverConnectionId: action.payload
+            };
+        case "SET_INITIAL_CALLER_USERNAME":
+            return{
+                ...state,
+                initialCallerUserName: action.payload
             }
         default:
             return state;

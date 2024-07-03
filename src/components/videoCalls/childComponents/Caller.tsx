@@ -19,6 +19,7 @@ const Caller = ({ token }) => {
     const [key, setKey] = useState(0); // Add a key state to force re-render
 
     const isReceiving = useSelector((state: any) => state.receiver.isReceiving); // Get isReceiving state from Redux
+    const initialCallerUserName = useSelector((state:any)=> state.receiver.initialCallerUserName);
 
     const handlePartnerUsernameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setCallPartnerUsername(e.target.value);
@@ -83,7 +84,7 @@ const Caller = ({ token }) => {
 
                         }                        
                         else if(connectionType === "SendVideoToSender"){
-                            await connection.send('SendVideoToSender', callPartnerUsername, new Uint8Array(arrayBuffer), "TESTING");
+                            await connection.send('SendVideoToSender', initialCallerUserName, new Uint8Array(arrayBuffer), "TESTING");
                             console.log('Chunk of data sent to' , 'SendVideoToSender');
 
                         }
@@ -105,7 +106,7 @@ const Caller = ({ token }) => {
 
         recorder.start(100);
         setMediaRecorder(recorder);
-    }, [connection, callPartnerUsername]);
+    }, [connection, callPartnerUsername, initialCallerUserName]);
 
     const startCamera = useCallback(async (connectionType) => {
         if (!isRecording) {
@@ -148,7 +149,7 @@ const Caller = ({ token }) => {
             //Step 3: Sender starts sending. 
             startCamera('SendVideoToSender');
         }
-    }, [isReceiving, startCamera]);
+    }, [isReceiving, initialCallerUserName, startCamera]);
 
 
 
