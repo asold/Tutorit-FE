@@ -2,11 +2,12 @@ import { ThunkAction } from "redux-thunk";
 import LoginAction from "../../types/loginTypes";
 import { Dispatch } from "redux";
 import axios from 'axios';
+import { SERVER_ADDRESS } from "../../common/constants.ts";
 
-const loginSuccess = (token:string):any => {
+const loginSuccess = (token:string, userId:string):any => {
     return {
         type: 'LOGIN_SUCCESS',
-        payload: token
+        payload: {token, userId}
     };
 };
 
@@ -18,14 +19,15 @@ const LoginFailure = (error:any):any => {
 };
 
 
-export const login =  (username: string, password: string, onSuccess: () => void):
-    ThunkAction<void, any, unknown, LoginAction> => 
+export const login =  (username: string, password: string):
+    ThunkAction<Promise<string>, any, unknown, LoginAction> => 
         async (dispatch:Dispatch) => {{
             try{
-                const response = await axios.post(`http://localhost:8000/tutorit/User/login`, {username, password});
-                const token = response.data;
-                dispatch(loginSuccess(token));
-                onSuccess();
+                const response = await axios.post(`${SERVER_ADDRESS}/tutorit/User/login`, {username, password});
+                const token = response.data.token;
+                const userId = response.data.userId;
+                dispatch(loginSuccess(token, userId));
+                return response.data.role;
             }
             catch(error){
                 await dispatch(LoginFailure(error));

@@ -3,15 +3,24 @@ import { ThunkAction } from 'redux-thunk';
 import { HubConnection } from '@microsoft/signalr';
 import { ACCEPT_CALL, DECLINE_CALL } from '../../types/videoCallTypes.ts';
 import axios from 'axios';
+import { SERVER_ADDRESS } from '../../common/constants.ts';
 
 const token = localStorage.getItem('token');
+
+export const SET_RECEIVING_STATUS = 'SET_RECEIVING_STATUS';
+
+export const setReceivingStatus = (isReceiving: boolean) => ({
+    type: SET_RECEIVING_STATUS,
+    payload: isReceiving,
+});
+
 
 export const acceptCall = (connectionId: string): ThunkAction<void, {}, {}, AnyAction> => 
 
     async (dispatch: Dispatch) => {
 
         try {
-            const response = await axios.post(`http://localhost:8000/tutorit/Call/acceptCall`, 
+            const response = await axios.post(`${SERVER_ADDRESS}/tutorit/Call/acceptCall`, 
             { recipientClientId: connectionId },
              {
                 headers: {
@@ -33,8 +42,11 @@ export const declineCall = (): ThunkAction<void, {}, {}, AnyAction> => async(dis
     dispatch({type:DECLINE_CALL});
 }
 
+export const setInitialCallerUserName = (username:string): ThunkAction<void, {}, {}, AnyAction>=>async(dispatch:Dispatch)=>{
+    dispatch({type:'SET_INITIAL_CALLER_USERNAME', payload:username})
+}
+
 
 export const setReceiverConnectionId = (connectionId:string): ThunkAction<void, {}, {}, AnyAction> => async(dispatch:Dispatch)=>{
-    console.log("ASDASDANDJBWOFIVBIWORNVINWVNWILOERBVIOWRVNIOWERVBUYIR");
     dispatch({type:'SET_RECEIVER_CONNECTION_ID', payload:connectionId});
 }

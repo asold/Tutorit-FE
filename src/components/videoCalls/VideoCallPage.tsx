@@ -1,12 +1,15 @@
+// src/components/VideoCallPage.js
+
 import React, { useState } from 'react';
-import VideoInteraction from './videoCalls/VideoInteraction.tsx';  // Assuming the initiator is in this file
-import VideoCallReceiver from './videoCalls/VideoCallReceiver.tsx';
-import CallAcceptanceModal from './videoCalls/CallAcceptanceModal.tsx';
+import Caller from './childComponents/Caller.tsx';  // Assuming the initiator is in this file
+import Receiver from './childComponents/Receiver.tsx';
+import CallAcceptanceModal from './childComponents/CallAcceptanceModal.tsx';
+import InteractionBoard from '../boards/InteractionBoard.tsx';
 import { useDispatch, useSelector } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
-import { acceptCall } from '../actions/videoActions/videoActions.ts';
-import SignalRHandler from './videoCalls/SignalRHandler.tsx';
+import { acceptCall } from '../../actions/videoActions/videoActions.ts';
+import SignalRHandler from './childComponents/SignalRHandler.tsx';
 
 const VideoCallPage = () => {
     const token = localStorage.getItem('token');
@@ -25,8 +28,6 @@ const VideoCallPage = () => {
         // setShowModal(false);
     };
 
-
-
     return (
         <div>
             <h1>Video Call Page</h1>
@@ -38,11 +39,17 @@ const VideoCallPage = () => {
             />
 
             <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-                <VideoInteraction token={token} />
-                <VideoCallReceiver token={token} />
+                <div style={{ flex: 1, margin: '0 10px' }}>
+                    <Caller token={token} />
+                </div>
+                <div style={{ flex: 1, margin: '0 10px' }}>
+                    <Receiver token={token} />
+                </div>
             </div>
 
-
+            <div style={{ marginTop: '20px' }}>
+                <InteractionBoard />
+            </div>
         </div>
     );
 };

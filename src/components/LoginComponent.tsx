@@ -35,9 +35,17 @@ const LoginComponent: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      dispatch(login(username, password, () => {
-          navigate('/video');
-      }));
+      const response = await dispatch(login(username, password));
+
+      console.log(response, "response");
+
+      if (response === 'Teacher') {
+        navigate('/teacher_main');
+      }
+      if (response === 'Student') {
+        navigate('/video');
+      }
+
 
     };
 

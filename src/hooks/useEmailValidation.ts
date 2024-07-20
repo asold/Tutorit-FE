@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { SERVER_ADDRESS } from '../common/constants.ts';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -24,7 +25,7 @@ const useEmailValidation = (email: string) => {
 
       setIsChecking(true);
       try {
-        const response = await axios.post('http://localhost:8000/tutorit/User/checkEmail', { email });
+        const response = await axios.post(`${SERVER_ADDRESS}/tutorit/User/checkEmail`, { email });
         if (response.status === 200) {
           setIsEmailValid(true);
           setError(null);
