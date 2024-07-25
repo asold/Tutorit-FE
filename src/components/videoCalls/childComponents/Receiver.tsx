@@ -121,8 +121,8 @@ const Receiver = ({ token }) => {
                 <div>Error: {error}</div>
             ) : (
                 <>
-                    <h1>Connection ID: {connection ? connection.connectionId : 'Not connected'}</h1>
-                    <h2>Received Video Stream</h2>
+                    {/* <h1>Connection ID: {connection ? connection.connectionId : 'Not connected'}</h1> */}
+                    <h2>Partner</h2>
                     <video ref={videoRef} autoPlay muted />
                 </>
             )}

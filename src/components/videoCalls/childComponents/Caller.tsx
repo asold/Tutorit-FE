@@ -168,7 +168,7 @@ const Caller = ({ token }) => {
 
     return (
         <div key={key}>
-            <h1>Video Interaction</h1>
+            <h1>Make Video Call</h1>
             <div>
                 <label htmlFor="username">Username:</label>
                 <input type="text" id="username" value={callPartnerUsername} onChange={handlePartnerUsernameChange} required />

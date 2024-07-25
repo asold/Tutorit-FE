@@ -1,5 +1,3 @@
-// src/components/VideoCallPage.js
-
 import React, { useState } from 'react';
 import Caller from './childComponents/Caller.tsx';  // Assuming the initiator is in this file
 import Receiver from './childComponents/Receiver.tsx';
@@ -29,26 +27,24 @@ const VideoCallPage = () => {
     };
 
     return (
-        <div>
-            <h1>Video Call Page</h1>
-
+        <div style={{ height: '100vh', display: 'flex', flexDirection: 'row' }}>
             <SignalRHandler
                 token={token}
                 onAccept={handleCallAccepted}
                 onDecline={handleCallDeclined}
             />
 
-            <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-                <div style={{ flex: 1, margin: '0 10px' }}>
-                    <Caller token={token} />
-                </div>
-                <div style={{ flex: 1, margin: '0 10px' }}>
-                    <Receiver token={token} />
-                </div>
+            <div style={{ flex: 1, margin: '0.5%', overflow: 'auto', position: 'relative' }}>
+                <InteractionBoard />
             </div>
 
-            <div style={{ marginTop: '20px' }}>
-                <InteractionBoard />
+            <div style={{ width: '20%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                <div style={{ flex: 1, margin: '0.5%' }}>
+                    <Caller token={token} />
+                </div>
+                <div style={{ flex: 1, margin: '0.5%' }}>
+                    <Receiver token={token} />
+                </div>
             </div>
         </div>
     );
