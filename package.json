@@ -16,13 +16,17 @@
     "i18next": "^23.11.4",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-http-backend": "^2.5.2",
+    "konva": "^9.3.14",
     "react": "^18.3.1",
+    "react-canvas-draw": "^1.2.1",
     "react-dom": "^18.3.1",
     "react-i18next": "^14.1.1",
+    "react-konva": "^18.2.10",
     "react-redux": "^9.1.0",
     "react-router-dom": "^6.22.3",
     "react-scripts": "5.0.1",
     "react-sketch-canvas": "^6.2.0",
+    "react-zoom-pan-pinch": "^3.6.1",
     "redux": "^5.0.1",
     "redux-thunk": "^3.1.0",
     "web-vitals": "^2.1.4"
@@ -50,5 +54,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
   }
 }
