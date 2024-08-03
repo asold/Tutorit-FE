@@ -4,6 +4,8 @@ import { HubConnection } from '@microsoft/signalr';
 import { ACCEPT_CALL, DECLINE_CALL } from '../../types/videoCallTypes.ts';
 import axios from 'axios';
 import { SERVER_ADDRESS } from '../../common/constants.ts';
+import { SET_CALL_PARTNER_USERNAME } from "../../types/commonTypes.ts";
+
 
 const token = localStorage.getItem('token');
 
@@ -50,3 +52,7 @@ export const setInitialCallerUserName = (username:string): ThunkAction<void, {},
 export const setReceiverConnectionId = (connectionId:string): ThunkAction<void, {}, {}, AnyAction> => async(dispatch:Dispatch)=>{
     dispatch({type:'SET_RECEIVER_CONNECTION_ID', payload:connectionId});
 }
+
+export const setCallPartnerUsername = (username: string): ThunkAction<void, {}, {}, AnyAction> => async (dispatch: Dispatch) => {
+    dispatch({ type: SET_CALL_PARTNER_USERNAME, payload: username });
+  };
