@@ -1,8 +1,8 @@
 // AddCourseForm.tsx
 import React, { useState } from 'react';
 import { Box, TextField, Button, Typography } from '@mui/material';
-import { CourseDto } from '../../types/courseDto.ts';
-import { SERVER_ADDRESS } from '../../common/constants.ts';
+import { CourseDto } from '../../../types/courseDto.ts';
+import { SERVER_ADDRESS } from '../../../common/constants.ts';
 
 interface AddCourseFormProps {
     onSubmit: (course: CourseDto) => void;

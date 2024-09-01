@@ -24,10 +24,17 @@ export const login =  (username: string, password: string):
         async (dispatch:Dispatch) => {{
             try{
                 const response = await axios.post(`${SERVER_ADDRESS}/tutorit/User/login`, {username, password});
+
+                console.log("Action response: ",response)
                 const token = response.data.token;
                 const userId = response.data.userId;
+                
+                console.log("UserId: ",userId)
+                console.log("Token: ",token)
+                
                 dispatch(loginSuccess(token, userId));
                 return response.data.role;
+                
             }
             catch(error){
                 await dispatch(LoginFailure(error));

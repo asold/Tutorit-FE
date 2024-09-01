@@ -50,7 +50,7 @@ export const addPersonalInfo =  (firstName: string, lastName: string, email:stri
       }
       try {
         const roleInt = Number(role);
-        const accountDto = { username, password, role: roleInt };
+        const accountDto = { username, password, role: roleInt, rememberMe:true };
   
         const response = await axios.post(`${SERVER_ADDRESS}/tutorit/User/registration`, {
           accountDto,
