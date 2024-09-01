@@ -1,11 +1,10 @@
 import { Alert, Box, Button, Dialog, DialogContent, DialogTitle, Snackbar, CircularProgress, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AddCourseForm from '../course/AddCourseForm.tsx';
-import ListOfCourses from '../course/ListOfCourses.tsx';
 import { CourseDto } from '../../types/courseDto.ts';
 import { SERVER_ADDRESS } from '../../common/constants.ts';
-
+import AddCourseForm  from '../course/tutor/AddCourseForm.tsx';
+import ListOfCourses from '../course/tutor/ListOfCourses.tsx'
 const TeacherMainPage: React.FC = () => {
     const [open, setOpen] = useState<boolean>(false);
     const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);

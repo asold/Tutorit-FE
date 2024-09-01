@@ -10,6 +10,7 @@ export interface CourseDto {
         fullName: string;
     };
     labels: Label[];
+    image:string;
 }
 
 export interface Label {

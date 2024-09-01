@@ -1,7 +1,8 @@
-import { Box, Typography, Card, CardContent, Rating, CircularProgress, Button } from '@mui/material';
+import { Box, Typography, Card, CardContent, Rating, Button } from '@mui/material';
 import React from 'react';
-import { CourseDto } from '../../types/courseDto.ts';
-import { SERVER_ADDRESS } from '../../common/constants.ts';
+import { CourseDto } from '../../../types/courseDto.ts';
+import { SERVER_ADDRESS } from '../../../common/constants.ts';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 interface ListOfCoursesProps {
     courses: CourseDto[];
@@ -9,6 +10,8 @@ interface ListOfCoursesProps {
 }
 
 const ListOfCourses: React.FC<ListOfCoursesProps> = ({ courses, onDelete }) => {
+    const navigate = useNavigate(); // Initialize navigate
+
     const handleDelete = async (courseId: string) => {
         try {
             const token = localStorage.getItem('token');
@@ -30,6 +33,10 @@ const ListOfCourses: React.FC<ListOfCoursesProps> = ({ courses, onDelete }) => {
         }
     };
 
+    const handleCourseDetails = (courseId: string) => {
+        navigate(`/courseDetails/${courseId}`); // Navigate to the course details page
+    };
+
     return (
         <Box>
             {courses.map((course) => (
@@ -42,6 +49,14 @@ const ListOfCourses: React.FC<ListOfCoursesProps> = ({ courses, onDelete }) => {
                         <Rating value={course.rating} readOnly precision={0.5} />
                         <Typography variant="body2">Language: {course.language}</Typography>
                         <Typography variant="body2">Tutor: {course.tutor.fullName}</Typography>
+                        <Button 
+                            variant="contained" 
+                            color="primary" 
+                            onClick={() => handleCourseDetails(course.id)}
+                            sx={{ marginTop: 2, marginRight: 1 }} // Add margin to separate buttons
+                        >
+                            Course details
+                        </Button>
                         <Button 
                             variant="contained" 
                             color="secondary" 
