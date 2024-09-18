@@ -17,15 +17,16 @@ const rootElement = document.getElementById('root');
 
 const theme = createTheme({
   palette: {
+    mode: 'light', // Add this line to explicitly set the mode
     primary: {
-      main: '#1976d2', 
+      main: '#1976d2',
     },
     secondary: {
-      main: '#dc004e', 
+      main: '#dc004e',
     },
   },
   typography: {
-    fontFamily: 'Roboto, Arial, sans-serif', 
+    fontFamily: 'Roboto, Arial, sans-serif',
   },
 });
 

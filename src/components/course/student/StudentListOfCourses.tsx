@@ -10,7 +10,7 @@ import { applyForCourse } from '../../../actions/course/courseActions.ts';
 
 interface CourseAppliedStatus {
   courseId: string;
-  applied: boolean;
+  applicationStatus: number; // 0: Pending, 1: Accepted, 2: Declined
 }
 
 interface Tutor {
@@ -40,12 +40,8 @@ const StudentListOfCourses: React.FC = () => {
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
 
   const appliedCourses = useSelector((state: any) => state.courseList as CourseAppliedStatus[]);
-
-
   const dispatch: ThunkDispatch<any, any, AnyAction> = useDispatch();
-
   let token = useSelector((state: any) => state.auth.token);
-
   const language = useSelector((state: any) => state.globalLanguage.language);
 
   const fetchCourses = async () => {
@@ -69,27 +65,24 @@ const StudentListOfCourses: React.FC = () => {
 
   const fetchApplicationStatuses = async (courses: Course[]) => {
     token = localStorage.getItem('token');
-    const encodedToken = encodeURIComponent(token)
+    const encodedToken = encodeURIComponent(token);
 
     for (const course of courses) {
       try {
-        const response = await fetch(`${SERVER_ADDRESS}/tutorit/Student/application_status?courseId=${course.id}&token=${encodedToken}`, {
+        const userId = localStorage.getItem('userId');
+        const response = await fetch(`${SERVER_ADDRESS}/tutorit/Student/application_status?courseId=${course.id}&userId=${userId}`, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
 
+        const status = await response.json(); // Assuming status is a number (0: Pending, 1: Accepted, 2: Declined)
 
-        const status = await response.text();
-
-        console.log("!!!!!!!!!!!",status)
-
-
-        // If the course is marked as applied on the server, dispatch the action to update the Redux state
-        if (status === 'Awaiting approval' || status === 'Accepted') {
-          await dispatch(applyForCourse(course.id));
+        // Dispatch action to update the Redux state with the course status
+        if (status === 0 || status === 1 || status === 2) {
+          await dispatch(applyForCourse(course.id, status)); // You may need to adjust the action to store the status
         }
       } catch (error) {
         console.error(`Failed to fetch status for course ${course.id}:`, error);
@@ -135,25 +128,29 @@ const StudentListOfCourses: React.FC = () => {
           {courses.map((course) => {
             const appliedStatus = appliedCourses.find(appliedCourse => appliedCourse.courseId === course.id);
 
-            console.log(appliedCourses)
-            
-            const status = appliedStatus?.applied
-            ? 'Awaiting approval'
-            : appliedStatus?.courseId === 'Accepted' 
-            ? 'Accepted' 
-            : 'Apply for course';
-
-            let buttonColor: 'primary' | 'success' | 'warning' = 'primary';
+            let statusText = 'Apply for course';
+            let buttonColor = '#007bff'; // Default blue for apply
             let isButtonDisabled = false;
-
-            if (status === 'Accepted') {
-              buttonColor = 'success';
-              isButtonDisabled = true;
-            } else if (status === 'Awaiting approval') {
-              buttonColor = 'warning';
-              isButtonDisabled = true;
+            
+            if (appliedStatus) {
+              switch (appliedStatus.applicationStatus) {
+                case 0: // Pending
+                statusText = 'Awaiting approval';
+                buttonColor = '#007bff'; // Blue color for pending
+                isButtonDisabled = true;
+                break;
+              case 1: // Accepted
+                statusText = 'Accepted by teacher';
+                buttonColor = '#28a745'; // Green color for accepted
+                isButtonDisabled = true;
+                break;
+              case 2: // Declined
+                statusText = 'Declined by teacher';
+                buttonColor = '#dc3545'; // Red color for declined
+                isButtonDisabled = true;
+                break;
+              }
             }
-
             return (
               <Card
                 key={course.id}
@@ -179,12 +176,16 @@ const StudentListOfCourses: React.FC = () => {
                   </Typography>
                   <Button
                     variant="contained"
-                    color={buttonColor}
                     onClick={() => handleApply(course.id)}
                     disabled={isButtonDisabled}
-                    sx={{ marginTop: '10px' }}
+                    style={{ 
+                      marginTop: '10px', 
+                      backgroundColor: buttonColor, 
+                      color: '#ffffff', // Ensure text color is white for contrast
+                      cursor: isButtonDisabled ? 'not-allowed' : 'pointer', // Show "not-allowed" cursor for disabled button
+                    }}
                   >
-                    {status}
+                    {statusText}
                   </Button>
                 </CardContent>
                 <Box sx={{ textAlign: 'center', marginLeft: '20px' }}>

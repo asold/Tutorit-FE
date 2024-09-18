@@ -54,7 +54,7 @@ const FillCourseApplicationForm: React.FC<FillCourseApplicationFormProps> = ({ o
         });
 
       // Dispatch the action here!
-      dispatch(applyForCourse(courseId)); // Dispatch your action with the courseId
+      dispatch(applyForCourse(courseId, 0)); // Dispatch your action with the courseId
 
       onSuccess();
       onClose();
@@ -82,13 +82,13 @@ const FillCourseApplicationForm: React.FC<FillCourseApplicationFormProps> = ({ o
             label={t('Select first meeting date')}
             value={firstMeetingDate}
             onChange={(date) => setFirstMeetingDate(date)}
-            renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
+            // renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
           />
           <TimePicker
             label={t('Select first meeting time')}
             value={firstMeetingTime}
             onChange={(time) => setFirstMeetingTime(time)}
-            renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
+            // renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
           />
         </DialogContent>
         <DialogActions>
