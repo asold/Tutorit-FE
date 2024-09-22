@@ -46,12 +46,20 @@ const CourseApplicationsList: React.FC = () => {
           'Content-Type': 'application/json',
         },
       });
-
+    
       if (response.ok) {
-        const data: CourseApplicationDto[] = await response.json();
-        setApplications(data);
+        const responseText = await response.text(); // Read the response as text first
+        
+        if (responseText) {
+          // If responseText is not empty, parse it as JSON
+          const data: CourseApplicationDto[] = JSON.parse(responseText);
+          setApplications(data);
+        } else {
+          // Handle empty response body
+          setApplications([]); // Set an empty array if there are no applications
+        }
       } else {
-        setError('Failed to fetch course applications.');
+        setError(`Failed to fetch course applications. Status: ${response.status}`);
       }
     } catch (error) {
       console.error('Error fetching course applications:', error);
@@ -59,6 +67,7 @@ const CourseApplicationsList: React.FC = () => {
     } finally {
       setLoading(false);
     }
+    
   };
 
   useEffect(() => {

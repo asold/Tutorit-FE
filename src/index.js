@@ -10,6 +10,8 @@ import {thunk} from 'redux-thunk';
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n.js';  
+import 'slick-carousel/slick/slick.css'; // Import Slick CSS
+import 'slick-carousel/slick/slick-theme.css'; // Import Slick theme CSS
 
 const store = createStore(rootReducer, applyMiddleware(thunk));
 

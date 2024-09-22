@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Avatar, Modal, Button } from '@mui/material';
 import { ApplicationStatus, changeCourseApplicationStatus } from '../../../dataHandlers/courses/commands/changeCourseApplicationStatus.ts';
+import { ThunkDispatch } from 'redux-thunk';
+import { AnyAction } from 'redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { changeApplicationStatus } from '../../../actions/applications/applicationActions.ts';
 
 interface UserDto {
   id: string;
@@ -36,6 +40,7 @@ const CourseApplicationModal: React.FC<CourseApplicationModalProps> = ({ open, o
   const [loading, setLoading] = useState(false);
   const tutorId = localStorage.getItem('userId') || ''; // Get tutor ID from localStorage
 
+  const dispatch: ThunkDispatch<any, any, AnyAction> = useDispatch();
   // Use useEffect to update the status based on application data when the component loads or application changes
   useEffect(() => {
     if (application) {
@@ -61,6 +66,8 @@ const CourseApplicationModal: React.FC<CourseApplicationModalProps> = ({ open, o
         token,
         application.courseId
       );
+
+      dispatch(changeApplicationStatus(status));
   
       alert('Status updated successfully!');
       
