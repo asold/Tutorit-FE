@@ -1,10 +1,12 @@
-import { Alert, Box, Button, Dialog, DialogContent, DialogTitle, Snackbar, CircularProgress, Typography } from '@mui/material';
+import { Alert, Box, Button, Dialog, DialogContent, DialogTitle, Snackbar, CircularProgress, Typography, Divider } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CourseDto } from '../../types/courseDto.ts';
 import { SERVER_ADDRESS } from '../../common/constants.ts';
-import AddCourseForm  from '../course/tutor/AddCourseForm.tsx';
-import ListOfCourses from '../course/tutor/ListOfCourses.tsx'
+import AddCourseForm from '../course/tutor/AddCourseForm.tsx';
+import ListOfCourses from '../course/tutor/ListOfCourses.tsx';
+import UserCalendar from '../users/UserCalendar.tsx';  // Import the UserCalendar component
+
 const TeacherMainPage: React.FC = () => {
     const [open, setOpen] = useState<boolean>(false);
     const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
@@ -90,7 +92,24 @@ const TeacherMainPage: React.FC = () => {
                     Course added successfully!
                 </Alert>
             </Snackbar>
-            {loading ? <CircularProgress /> : error ? <Typography color="error">{error}</Typography> : <ListOfCourses courses={courses} onDelete={handleDeleteCourse} />}
+
+            {/* Horizontal Scrolling Carousel for Courses */}
+            {loading ? (
+                <CircularProgress />
+            ) : error ? (
+                <Typography color="error">{error}</Typography>
+            ) : (
+                <ListOfCourses courses={courses} onDelete={handleDeleteCourse} />
+            )}
+
+            {/* Adjust Calendar Size and Centering */}
+            <Box display="flex" justifyContent="center" sx={{ mt: 4, px: '10%' }}>
+                <Box sx={{ width: '80%' }}>
+                    <Typography variant="h6">Calendar</Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <UserCalendar />
+                </Box>
+            </Box>
         </Box>
     );
 };

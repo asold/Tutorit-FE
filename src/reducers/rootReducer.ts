@@ -6,6 +6,7 @@ import registrationReducer from "./registrationReducers/registrationReducer.ts";
 import setCallPartnerUsernameReducer from "./videoCallReducers/setCallPartnerUsernameReducer.ts";
 import globalLanguageReducer from "./language/globalLanguageReducer.ts"
 import courseListReducer from "./courseReducers/courseListReducer.ts";
+import changeApplicationStatusReducer from "./courseApplicationReducers/changeApplicationStatusReducer.ts"
 
 export const rootReducer = combineReducers({
     auth:loginReducer,
@@ -15,6 +16,7 @@ export const rootReducer = combineReducers({
     callPartner:setCallPartnerUsernameReducer,
     globalLanguage:globalLanguageReducer,
     courseList:courseListReducer,
+    applicationStatus:changeApplicationStatusReducer,
 });
 
 export default rootReducer;

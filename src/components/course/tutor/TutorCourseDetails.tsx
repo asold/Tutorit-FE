@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress, Card, CardContent } from '@mui/material';
+import { Box, Typography, CircularProgress, Card, CardContent, Divider } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { CourseDto } from '../../../types/courseDto.ts';
 import { SERVER_ADDRESS } from '../../../common/constants.ts';
-import CourseApplicationsList from './CourseApplicationsList.tsx'; // Import the CourseApplicationsList component
+import CourseApplicationsList from './CourseApplicationsList.tsx';
+import UserCalendar from '../../users/UserCalendar.tsx'; // Import the UserCalendar component
 
 const TutorCourseDetails: React.FC = () => {
-    const { courseId } = useParams<{ courseId: string }>(); // Get the course ID from URL params
+    const { courseId } = useParams<{ courseId: string }>();
     const [course, setCourse] = useState<CourseDto | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -15,9 +16,6 @@ const TutorCourseDetails: React.FC = () => {
         const fetchCourseDetails = async () => {
             try {
                 const token = localStorage.getItem('token');
-
-                console.log("Course Id:", courseId);
-                console.log("User Token:", token);
 
                 const response = await fetch(`${SERVER_ADDRESS}/tutorit/Teacher/course_details?courseId=${courseId}`, {
                     method: 'GET',
@@ -34,7 +32,6 @@ const TutorCourseDetails: React.FC = () => {
                     setError('Failed to fetch course details.');
                 }
             } catch (error) {
-                console.error('Error fetching course details:', error);
                 setError('An error occurred while fetching course details.');
             } finally {
                 setLoading(false);
@@ -58,30 +55,29 @@ const TutorCourseDetails: React.FC = () => {
 
     return (
         <Box>
-            {/* Display course details similar to the layout in your sketch */}
             <Card sx={{ marginBottom: 2, backgroundImage: `url(${course.image})`, backgroundSize: 'cover', color: 'white' }}>
                 <CardContent>
-                    <Typography variant="h4" contentEditable sx={{ display: 'inline-block', marginRight: 2 }}>
-                        {course.name}
-                    </Typography>
-                    <Typography variant="body1" contentEditable sx={{ display: 'inline-block', marginRight: 2 }}>
-                        {course.language}
-                    </Typography>
-                    <Typography variant="h5" sx={{ position: 'absolute', right: 16, top: 16 }}>
-                        {course.rating.toFixed(1)}
-                    </Typography>
+                    <Typography variant="h5">{course.name}</Typography>
+                    <Typography variant="body1">{course.description}</Typography>
                 </CardContent>
             </Card>
 
-            <Box display="flex">
-                <Box flex={1}>
+            <Box display="flex" sx={{ width: '100%', mt: 2 }}>
+                {/* Left Column: List of Applications */}
+                <Box flex={1} sx={{ pr: 2 }}>
                     <Typography variant="h6">List of Applications</Typography>
-                    {/* Replace the placeholder with the actual component */}
+                    <Divider sx={{ mb: 2 }} />
                     <CourseApplicationsList />
                 </Box>
-                <Box flex={2}>
-                    <Typography variant="h6">Calendar (monthly)</Typography>
-                    {/* Placeholder for Calendar component */}
+
+                {/* Divider between the two columns */}
+                <Divider orientation="vertical" flexItem />
+
+                {/* Right Column: Calendar */}
+                <Box flex={2} sx={{ pl: 2 }}>
+                    <Typography variant="h6">Calendar</Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <UserCalendar selectedCourse={courseId} />
                 </Box>
             </Box>
         </Box>

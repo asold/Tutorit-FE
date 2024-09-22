@@ -42,8 +42,6 @@ const AddCourseForm: React.FC<AddCourseFormProps> = ({ onSubmit, onClose }) => {
                 throw new Error('Failed to add course');
             }
 
-            console.log(response, 'response')
-
             const newCourse: CourseDto = await response.json();
             onSubmit(newCourse);
             onClose();
