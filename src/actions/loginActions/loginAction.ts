@@ -1,5 +1,5 @@
 import { ThunkAction } from "redux-thunk";
-import LoginAction from "../../types/loginTypes";
+import LoginAction, { LOGIN_SUCCESS, LOGOUT } from "../../types/loginTypes.ts";
 import { Dispatch } from "redux";
 import axios from 'axios';
 import { SERVER_ADDRESS } from "../../common/constants.ts";
@@ -17,6 +17,13 @@ const LoginFailure = (error:any):any => {
         payload: error
     };
 };
+
+// loginActions.ts
+
+export const loginUser = (token: string, userId: string) => ({
+  type: LOGIN_SUCCESS,
+  payload: { token, userId },
+});
 
 
 export const login =  (username: string, password: string):
@@ -41,3 +48,7 @@ export const login =  (username: string, password: string):
         }
     }
 }
+
+export const logoutUser = () => ({
+    type: LOGOUT,
+  });

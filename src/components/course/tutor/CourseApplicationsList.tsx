@@ -49,6 +49,7 @@ const CourseApplicationsList: React.FC = () => {
     
       if (response.ok) {
         const responseText = await response.text(); // Read the response as text first
+        console.log('Response text:', responseText);
         
         if (responseText) {
           // If responseText is not empty, parse it as JSON

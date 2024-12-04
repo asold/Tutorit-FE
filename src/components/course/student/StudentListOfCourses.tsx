@@ -57,7 +57,8 @@ const StudentListOfCourses: React.FC = () => {
       // Fetch application statuses once courses are loaded
       await fetchApplicationStatuses(data);
     } catch (error: any) {
-      setError(error.message);
+      fetchCourses();
+      // setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -131,23 +132,30 @@ const StudentListOfCourses: React.FC = () => {
             let statusText = 'Apply for course';
             let buttonColor = '#007bff'; // Default blue for apply
             let isButtonDisabled = false;
+            let textColor = '#ffffff';
             
             if (appliedStatus) {
               switch (appliedStatus.applicationStatus) {
                 case 0: // Pending
                 statusText = 'Awaiting approval';
-                buttonColor = '#007bff'; // Blue color for pending
+                buttonColor = '#8eb5c4'; // White/Greyish color for pending
                 isButtonDisabled = true;
+                textColor = '#007bff'; // Blue color for pending
+
                 break;
               case 1: // Accepted
                 statusText = 'Accepted by teacher';
                 buttonColor = '#28a745'; // Green color for accepted
                 isButtonDisabled = true;
+                textColor = '#ffffff'; // Blue color for pending
+
                 break;
               case 2: // Declined
                 statusText = 'Declined by teacher';
                 buttonColor = '#dc3545'; // Red color for declined
                 isButtonDisabled = true;
+                textColor = '#ffffff'; // Blue color for pending
+
                 break;
               }
             }

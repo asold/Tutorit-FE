@@ -47,7 +47,9 @@ const TeacherMainPage: React.FC = () => {
             const data = await response.json();
             setCourses(data);
         } catch (err) {
-            setError(err.message);
+            console.error(err);
+            // setError(err.message);
+            fetchCourses();
         } finally {
             setLoading(false);
         }

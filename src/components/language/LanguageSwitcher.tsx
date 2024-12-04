@@ -1,44 +1,34 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Box } from '@mui/material';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { updateGlobalLanguage } from '../../actions/langauge/languageActions.ts';
 import { useNavigate } from 'react-router-dom';
+import { loginUser, logoutUser } from '../../actions/loginActions/loginAction.ts'; // Import loginUser action
 
 const LanguageSwitcher: React.FC = () => {
   const { i18n } = useTranslation();
   const dispatch: ThunkDispatch<any, any, AnyAction> = useDispatch();
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  // Use Redux to get the login state
+  const isLoggedIn = useSelector((state: any) => state.auth.isLoggedIn);
 
   useEffect(() => {
+    // Sync language change in i18n to global state
     const language = i18n.language;
     dispatch(updateGlobalLanguage(language));
 
-    // Check if token and userId are present in localStorage
+    // Check if token and userId are present in localStorage on page load
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('userId');
     if (token && userId) {
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
+      // Dispatch loginUser action to restore login state in Redux
+      dispatch(loginUser(token, userId));
     }
   }, [i18n.language, dispatch]);
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const token = localStorage.getItem('token');
-      const userId = localStorage.getItem('userId');
-      setIsLoggedIn(!!(token && userId));
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
 
   const changeLanguage = async (lng: string) => {
     i18n.changeLanguage(lng);
@@ -49,7 +39,7 @@ const LanguageSwitcher: React.FC = () => {
     // Remove token and userId from localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
-    setIsLoggedIn(false);
+    dispatch(logoutUser()); // Dispatch logout to update Redux state
     navigate('/login'); // Redirect to login page after logout
   };
 

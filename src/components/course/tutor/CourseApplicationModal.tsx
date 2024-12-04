@@ -86,9 +86,12 @@ const CourseApplicationModal: React.FC<CourseApplicationModalProps> = ({ open, o
         {application && (
           <>
             <Avatar
-              alt={`${application.student.firstName} ${application.student.lastName}`}
-              src={`data:image/png;base64,${application.student.photoUrl}`}
-              sx={{ width: 56, height: 56, marginBottom: 2 }}
+                src={application.student.photoUrl}
+                alt={`${application.student.firstName} ${application.student.lastName}`}
+                sx={{ width: 80, height: 80 }}
+              // alt={`${application.student.firstName} ${application.student.lastName}`}
+              // src={`data:image/png;base64,${application.student.photoUrl}`}
+              // sx={{ width: 56, height: 56, marginBottom: 2 }}
             />
             <Typography variant="h6">
               {application.student.firstName} {application.student.lastName}

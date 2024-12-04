@@ -1,6 +1,7 @@
-import LoginAction, { LOGIN_FAILURE, LOGIN_SUCCESS, LoginState } from "../../types/loginTypes.ts";
+import LoginAction, { LOGIN_FAILURE, LOGIN_SUCCESS, LoginState, LOGOUT } from "../../types/loginTypes.ts";
 
 const initialState:LoginState = {
+    isLoggedIn:false,
     token:null,
     userId:null,
     error:null
@@ -9,13 +10,14 @@ const initialState:LoginState = {
 const loginReducer = (state = initialState, action:LoginAction) => {
     
     switch(action.type){
+        
 
         case LOGIN_SUCCESS:
-            console.log("Login success", action);
             localStorage.setItem('token', action.payload.token);
             localStorage.setItem('userId', action.payload.userId);
             return {
                 ...state,
+                isLoggedIn:true,
                 token: action.payload.token,
                 userId:action.payload.userId,
                 error:null
@@ -27,6 +29,8 @@ const loginReducer = (state = initialState, action:LoginAction) => {
                 token:null,
                 error:action.payload
             }
+        case LOGOUT:
+            return initialState;
         default:
             return state;
     }
