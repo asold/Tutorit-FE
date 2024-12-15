@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, FormControl, FormControlLabel, Radio, RadioGroup, TextField, Typography, CircularProgress } from '@mui/material';
+import { Box, Button, FormControl, FormControlLabel, Radio, RadioGroup, TextField, Typography, CircularProgress, Paper } from '@mui/material';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import { useDispatch } from 'react-redux';
@@ -25,82 +25,99 @@ const UserRegistration: React.FC = () => {
   const isFormComplete = username && password && repeatPassword && role && password === repeatPassword && isUsernameValid;
 
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-      <Box display="flex" flexDirection="column" alignItems="center" p={2} border="1px solid #ccc" borderRadius="8px">
-        <Typography variant="h2" gutterBottom>
+    <Box 
+      display="flex" 
+      justifyContent="center" 
+      alignItems="center" 
+      minHeight="100vh" 
+      sx={{ backgroundColor: '#fafafa' }}
+    >
+      <Paper 
+        elevation={3} 
+        sx={{
+          p: 4, 
+          maxWidth: '400px', 
+          textAlign: 'center', 
+          borderRadius: '16px', 
+          backgroundColor: '#ffffff'
+        }}
+      >
+        <Typography 
+          variant="h5" 
+          gutterBottom 
+          sx={{ color: '#333333', fontWeight: '500' }}
+        >
           Register
         </Typography>
         <form>
-          <Box display="flex" flexDirection="column" alignItems="center" mb={1} width="100%">
-            <Box mb={1} width="300px">
-              <TextField
-                label="Username"
-                variant="outlined"
-                fullWidth
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                error={!!error}
-                helperText={error}
-              />
-              {isChecking && <CircularProgress size={24} />}
-            </Box>
-            <Box mb={1} width="300px">
-              <TextField
-                label="Password"
-                variant="outlined"
-                type="password"
-                fullWidth
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </Box>
-            <Box mb={1} width="300px">
-              <TextField
-                label="Repeat Password"
-                variant="outlined"
-                type="password"
-                fullWidth
-                value={repeatPassword}
-                onChange={(e) => setRepeatPassword(e.target.value)}
-                required
-                error={repeatPassword !== password}
-                helperText={repeatPassword !== password ? 'Passwords do not match' : ''}
-              />
-            </Box>
-            <Box mb={1} display="flex" flexDirection="column" alignItems="center" width="300px">
-              <FormControl component="fieldset">
-                <Typography variant="h6" gutterBottom textAlign="center">
-                  Role
-                </Typography>
-                <RadioGroup value={role} onChange={handleRoleChange}>
-                  <FormControlLabel value="1" control={<Radio />} label="Student" />
-                  <FormControlLabel value="0" control={<Radio />} label="Teacher" />
-                </RadioGroup>
-              </FormControl>
-            </Box>
+          <Box mb={2} width="100%">
+            <TextField
+              label="Username"
+              variant="outlined"
+              fullWidth
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              error={!!error}
+              helperText={error}
+            />
+            {isChecking && <CircularProgress size={24} />}
           </Box>
-          <Box mt={2} textAlign="center">
-
-            <Button
-              variant="contained"
-              color="primary"
-              disabled={!isFormComplete}
-
-              onClick={() => {
-                dispatch(register( username, password, role,() => {
-                  navigate('/login');
-                }));
-              }}
-            >
-              Register
+          <Box mb={2} width="100%">
+            <TextField
+              label="Password"
+              variant="outlined"
+              type="password"
+              fullWidth
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </Box>
+          <Box mb={2} width="100%">
+            <TextField
+              label="Repeat Password"
+              variant="outlined"
+              type="password"
+              fullWidth
+              value={repeatPassword}
+              onChange={(e) => setRepeatPassword(e.target.value)}
+              required
+              error={repeatPassword !== password}
+              helperText={repeatPassword !== password ? 'Passwords do not match' : ''}
+            />
+          </Box>
+          <FormControl component="fieldset" sx={{ width: '100%', mb: 2 }}>
+            <Typography variant="body1" gutterBottom textAlign="center">
+              Role
+            </Typography>
+            <RadioGroup value={role} onChange={handleRoleChange}>
+              <FormControlLabel value="1" control={<Radio />} label="Student" />
+              <FormControlLabel value="0" control={<Radio />} label="Teacher" />
+            </RadioGroup>
+          </FormControl>
+          <Button 
+            variant="contained" 
+            fullWidth 
+            sx={{
+              backgroundColor: '#6db5a0', 
+              color: '#ffffff', 
+              py: 1.5, 
+              '&:hover': { backgroundColor: '#5a9d8d' }
+            }}
+            onClick={() => {
+              dispatch(register(username, password, role, () => {
+                navigate('/login');
+              }));
+            }}
+          >
+            Register
           </Button>
-          </Box>
         </form>
-      </Box>
+      </Paper>
     </Box>
   );
+  
 };
 
 export default UserRegistration;
