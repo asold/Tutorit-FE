@@ -2,20 +2,21 @@
 FROM node:18 AS build
 WORKDIR /app
 
-# Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
 
-# Copy the source code and build the app
 COPY . .
 RUN npm run build
 
 # Stage 2: Serve the application using Nginx
 FROM nginx:alpine AS production
-COPY --from=build /app/build /usr/share/nginx/html
 
-# Expose port 80 for the React app
+COPY --from=build /app/build /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Ensure locales directory is included
+COPY public/locales /usr/share/nginx/html/locales
+
 EXPOSE 80
 
-# Start Nginx server
 CMD ["nginx", "-g", "daemon off;"]

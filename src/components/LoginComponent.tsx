@@ -6,7 +6,7 @@ import { login } from '../actions/loginActions/loginAction.ts';
 import { useNavigate } from 'react-router-dom';
 import { LoginState } from '../types/loginTypes.ts';
 import { useTranslation } from 'react-i18next';
-import { Box, Button, TextField, Typography } from '@mui/material';
+import { Box, Button, Paper, TextField, Typography } from '@mui/material';
 import { SERVER_ADDRESS } from '../common/constants.ts';
 
 const LoginComponent: React.FC = () => {
@@ -81,15 +81,34 @@ const LoginComponent: React.FC = () => {
   };
 
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" height="90vh">
-      <Box display="flex" flexDirection="column" alignItems="center" p={2} border="1px solid #ccc" borderRadius="8px">
-        <Typography variant="h2" gutterBottom>
-          {t('login')}
+    <Box 
+      display="flex" 
+      justifyContent="center" 
+      alignItems="center" 
+      minHeight="100vh" 
+      sx={{ backgroundColor: '#fafafa' }}
+    >
+      <Paper 
+        elevation={3} 
+        sx={{
+          p: 4, 
+          maxWidth: '400px', 
+          textAlign: 'center', 
+          borderRadius: '16px', 
+          backgroundColor: '#ffffff'
+        }}
+      >
+        <Typography 
+          variant="h5" 
+          gutterBottom 
+          sx={{ color: '#333333', fontWeight: '500' }}
+        >
+          Login
         </Typography>
         <form onSubmit={handleSubmit}>
-          <Box mb={2} width="300px">
+          <Box mb={2} width="100%">
             <TextField
-              label={t('username')}
+              label={t('Username')}
               variant="outlined"
               fullWidth
               value={username}
@@ -97,9 +116,9 @@ const LoginComponent: React.FC = () => {
               required
             />
           </Box>
-          <Box mb={2} width="300px">
+          <Box mb={2} width="100%">
             <TextField
-              label={t('password')}
+              label={t('Password')}
               variant="outlined"
               type="password"
               fullWidth
@@ -109,26 +128,35 @@ const LoginComponent: React.FC = () => {
             />
           </Box>
           <Button 
-            variant='contained'
-            color="primary"
+            variant="contained" 
+            fullWidth 
+            sx={{
+              backgroundColor: '#6db5a0', 
+              color: '#ffffff', 
+              py: 1.5, 
+              '&:hover': { backgroundColor: '#5a9d8d' }
+            }}
             type="submit"
-            fullWidth
           >
-            {t('login')}
+            {t('Login')}
           </Button>
         </form>
         <Box mt={2}>
           <Button 
-            variant="outlined"
-            color="info"
+            variant="text" 
+            sx={{
+              color: '#6db5a0', 
+              '&:hover': { textDecoration: 'underline' }
+            }}
             onClick={() => navigate('/register')}
           >
-            {t('register')}
+            {t('Register')}
           </Button>
         </Box>
-      </Box>
+      </Paper>
     </Box>
   );
+  
 };
 
 export default LoginComponent;
