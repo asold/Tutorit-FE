@@ -12,8 +12,8 @@ interface ListOfCoursesProps {
 }
 
 const ListOfCourses: React.FC<ListOfCoursesProps> = ({ courses, onDelete }) => {
-    const navigate = useNavigate(); // Initialize navigate
-    const [startIndex, setStartIndex] = useState(0); // Start at index 0
+    const navigate = useNavigate();
+    const [startIndex, setStartIndex] = useState(0);
     const coursesPerPage = 3;
 
     const handleDelete = async (courseId: string) => {
@@ -38,10 +38,9 @@ const ListOfCourses: React.FC<ListOfCoursesProps> = ({ courses, onDelete }) => {
     };
 
     const handleCourseDetails = (courseId: string) => {
-        navigate(`/courseDetails/${courseId}`); // Navigate to the course details page
+        navigate(`/courseDetails/${courseId}`);
     };
 
-    // Pagination logic: calculate the visible courses based on startIndex
     const visibleCourses = courses.slice(startIndex, startIndex + coursesPerPage);
 
     const handleNext = () => {
@@ -57,9 +56,9 @@ const ListOfCourses: React.FC<ListOfCoursesProps> = ({ courses, onDelete }) => {
     };
 
     return (
-        <Box sx={{ width: '80%', margin: 'auto', mt: 4 }}>
-            {/* Navigation buttons for previous and next */}
-            <Box display="flex" justifyContent="space-between" mb={2}>
+        <Box sx={{ width: '100%', margin: 'auto', mt: 4 }}>
+            {/* Navigation buttons */}
+            <Box display="flex" justifyContent="space-around" mb={2}>
                 <IconButton onClick={handlePrevious} disabled={startIndex === 0}>
                     <ArrowBackIcon />
                 </IconButton>
@@ -68,10 +67,19 @@ const ListOfCourses: React.FC<ListOfCoursesProps> = ({ courses, onDelete }) => {
                 </IconButton>
             </Box>
 
-            {/* Display the current 3 visible courses */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+            {/* Display Courses with Center Alignment */}
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: visibleCourses.length <= 2 ? 'center' : 'center',
+                    alignItems: 'center',
+                    gap: 2,
+                    flexWrap: 'wrap',
+                    width: '100%',
+                }}
+            >
                 {visibleCourses.map((course) => (
-                    <Card key={course.id} sx={{ width: '30%' }}>
+                    <Card key={course.id} sx={{ width: '30%', minWidth: 250 }}>
                         <CardContent>
                             <Typography variant="h5">{course.name}</Typography>
                             <Typography variant="body2" color="text.secondary">
@@ -101,6 +109,7 @@ const ListOfCourses: React.FC<ListOfCoursesProps> = ({ courses, onDelete }) => {
                 ))}
             </Box>
         </Box>
+
     );
 };
 

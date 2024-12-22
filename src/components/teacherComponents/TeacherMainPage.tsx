@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Dialog, DialogContent, DialogTitle, Snackbar, CircularProgress, Typography, Divider } from '@mui/material';
+import { Alert, Box, Button, Dialog, DialogContent, DialogTitle, Snackbar, CircularProgress, Typography, Divider, Fab } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CourseDto } from '../../types/courseDto.ts';
@@ -6,6 +6,7 @@ import { SERVER_ADDRESS } from '../../common/constants.ts';
 import AddCourseForm from '../course/tutor/AddCourseForm.tsx';
 import ListOfCourses from '../course/tutor/ListOfCourses.tsx';
 import UserCalendar from '../users/UserCalendar.tsx';  // Import the UserCalendar component
+import AddIcon from '@mui/icons-material/Add';
 
 const TeacherMainPage: React.FC = () => {
     const [open, setOpen] = useState<boolean>(false);
@@ -71,18 +72,42 @@ const TeacherMainPage: React.FC = () => {
     return (
         <Box>
             <h1>Teacher Main Page</h1>
-            <Button 
-                onClick={handleOpen}
-                variant="contained"
+            <Box
+                display= 'flex' 
+                flex-direction={{xs: 'column', md: 'row'}}
+                justifyContent="flex-start"
+                alignItems="center"
+                width={{ xs: '100%', md: '50%' }}
+                paddingLeft={{ xs: 0, md: 2 }}
+                marginLeft={0}
+                gap={2}
             >
-                Create a New Course
-            </Button>
-            <Button 
-                onClick={navigateToCall}
-                variant="contained"
-            >
-                Make a Video Call    
-            </Button>
+                <Fab
+                    sx={{
+                        backgroundColor: '#6db5a0', 
+                        color: '#ffffff', 
+                        py: 1.5, 
+                        '&:hover': { backgroundColor: '#5a9d8d' }
+                    }}
+                    title = "Create a New Course"
+                    onClick={handleOpen}
+                >
+                    <AddIcon/>
+                </Fab>
+                <Button 
+                    sx={{
+                        backgroundColor: '#6db5a0', 
+                        color: '#ffffff', 
+                        py: 1.5, 
+                        '&:hover': { backgroundColor: '#5a9d8d' }
+                    }}
+                    onClick={navigateToCall}
+                    variant="contained"
+                >
+                    Make a Video Call    
+                </Button>
+            </Box>
+            
             <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Add New Course</DialogTitle>
                 <DialogContent>
@@ -96,13 +121,29 @@ const TeacherMainPage: React.FC = () => {
             </Snackbar>
 
             {/* Horizontal Scrolling Carousel for Courses */}
-            {loading ? (
+            {/* {loading ? (
                 <CircularProgress />
             ) : error ? (
                 <Typography color="error">{error}</Typography>
             ) : (
                 <ListOfCourses courses={courses} onDelete={handleDeleteCourse} />
-            )}
+            )} */}
+
+            <Box
+                title="Courses"
+                display="flex"
+                justifyContent={courses.length <= 2 ? 'center' : 'flex-start'}
+                alignItems="center"
+                overflow={courses.length > 2 ? 'auto' : 'visible'}
+                gap={2}
+                width="100%"
+                padding={2}
+            >
+                <ListOfCourses 
+                    courses={courses} 
+                    onDelete={handleDeleteCourse} 
+                />
+            </Box>
 
             {/* Adjust Calendar Size and Centering */}
             <Box display="flex" justifyContent="center" sx={{ mt: 4, px: '10%' }}>
