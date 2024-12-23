@@ -7,27 +7,31 @@ import { Box, Button } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
+import UserStatusDropdown from '../users/UserStatusDropdown.tsx'; // Moved the dropdown here
 
 const VideoCallPage = () => {
     const token = localStorage.getItem('token');
     const [showInteractionBoard, setShowInteractionBoard] = useState(false);
     const [showModal, setShowModal] = useState(false);
+
+    // NEW: Maintain the selected username in the parent, not in Caller
+    const [callPartnerUsername, setCallPartnerUsername] = useState('');
+
     const callAccepted = useSelector((state: any) => state.videoCall.callAccepted);
     const callDeclined = useSelector((state: any) => state.videoCall.callDeclined);
     const dispatch: ThunkDispatch<any, any, AnyAction> = useDispatch();
     const receiverConnectionId = useSelector((state: any) => state.receiver.receiverConnectionId);
 
     const toggleInteractionBoard = () => {
-        setShowInteractionBoard((prev) => !prev);
+        setShowInteractionBoard(prev => !prev);
     };
 
     const handleCallAccepted = async () => {
-        // await dispatch(acceptCall(receiverConnectionId));
         setShowModal(false);
     };
 
     const handleCallDeclined = () => {
-        // setShowModal(false);
+        setShowModal(false);
     };
 
     return (
@@ -57,9 +61,27 @@ const VideoCallPage = () => {
                 </Button>
             </Box>
 
+            {/* Username Dropdown: Moved from Caller */}
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    marginTop: '4rem',
+                    marginLeft: '1rem',
+                    zIndex: 1000,
+                }}
+            >
+                <label htmlFor="username">Select Partner:</label>
+                <UserStatusDropdown 
+                    token={token}
+                    onUsernameSelect={setCallPartnerUsername} // <--- We update state here
+                />
+            </Box>
+
             {/* Content Section */}
             {!showInteractionBoard ? (
-                // Initial View (Sender and Receiver in Center)
+                // Initial View
                 <Box
                     sx={{
                         display: 'flex',
@@ -80,7 +102,8 @@ const VideoCallPage = () => {
                             textAlign: 'center',
                         }}
                     >
-                        <Caller token={token} />
+                        {/* Pass selected username as prop to Caller */}
+                        <Caller token={token} callPartnerUsername={callPartnerUsername} />
                     </Box>
                     <Box
                         sx={{
@@ -95,7 +118,7 @@ const VideoCallPage = () => {
                     </Box>
                 </Box>
             ) : (
-                // Interaction Board Opened
+                // Interaction Board
                 <Box
                     sx={{
                         display: 'flex',
@@ -106,7 +129,6 @@ const VideoCallPage = () => {
                         gap: 2,
                     }}
                 >
-                    {/* Smaller Caller & Receiver Boxes on Top */}
                     <Box
                         sx={{
                             display: 'flex',
@@ -125,11 +147,11 @@ const VideoCallPage = () => {
                                 borderRadius: '8px',
                                 padding: 1,
                                 width: { xs: '30%', md: '20%' },
-                                height: { xs: '100%', md: '100%' },
+                                height: { xs: '30%', md: '100%' },
                                 textAlign: 'center',
                             }}
                         >
-                            <Caller token={token} />
+                            <Caller token={token} callPartnerUsername={callPartnerUsername} />
                         </Box>
                         <Box
                             sx={{
@@ -144,7 +166,6 @@ const VideoCallPage = () => {
                         </Box>
                     </Box>
 
-                    {/* Interaction Board Below */}
                     <Box
                         sx={{
                             flexGrow: 1,

@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { MenuItem, Select, FormControl, InputLabel, CircularProgress, Box, Typography } from '@mui/material';
+import {
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  CircularProgress,
+  Box,
+  Typography
+} from '@mui/material';
 import { green, grey } from '@mui/material/colors';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { SERVER_ADDRESS } from '../../common/constants.ts'; // Ensure this is correct
-import { useDispatch } from 'react-redux';
-import { setCallPartnerUsername } from '../../actions/videoActions/videoActions.ts';
-import { ThunkDispatch } from 'redux-thunk';
-import { AnyAction } from 'redux';
 import { SelectChangeEvent } from '@mui/material/Select';
 
 interface UserStatus {
@@ -16,24 +20,31 @@ interface UserStatus {
 }
 
 interface UserStatusDropdownProps {
-  token: string;
+  token: string | null;
+  onUsernameSelect: (username: string) => void; // Callback to parent
 }
 
-const UserStatusDropdown: React.FC<UserStatusDropdownProps> = ({ token }) => {
-  const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
+const UserStatusDropdown: React.FC<UserStatusDropdownProps> = ({ token, onUsernameSelect }) => {
   const [users, setUsers] = useState<UserStatus[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [selectedUsername, setSelectedUsername] = useState<string>(''); // State to track selected username
+  const [selectedUsername, setSelectedUsername] = useState<string>(''); // Local state to track dropdown
 
+  /**
+   * Fetch user statuses on mount
+   */
   useEffect(() => {
     const fetchUserStatuses = async () => {
-      const encodedToken = encodeURIComponent(token);
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
       try {
+        const encodedToken = encodeURIComponent(token);
         const response = await fetch(`${SERVER_ADDRESS}/tutorit/User/user_status?token=${encodedToken}`, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`
+            Authorization: `Bearer ${token}`
           }
         });
 
@@ -53,10 +64,13 @@ const UserStatusDropdown: React.FC<UserStatusDropdownProps> = ({ token }) => {
     fetchUserStatuses();
   }, [token]);
 
+  /**
+   * Handle dropdown selection
+   */
   const handleChange = (event: SelectChangeEvent) => {
-    const selectedUsername = event.target.value as string;
-    setSelectedUsername(selectedUsername); // Update the selected username state
-    dispatch(setCallPartnerUsername(selectedUsername)); // Dispatch action to Redux
+    const username = event.target.value as string;
+    setSelectedUsername(username);
+    onUsernameSelect(username); // Pass the selected username to parent
   };
 
   if (loading) {
@@ -69,11 +83,11 @@ const UserStatusDropdown: React.FC<UserStatusDropdownProps> = ({ token }) => {
       <Select
         labelId="user-status-label"
         id="user-status-select"
-        value={selectedUsername} // Set the value to the selected username state
+        value={selectedUsername}
         label="Online Users"
         onChange={handleChange}
       >
-        {users.map(user => (
+        {users.map((user) => (
           <MenuItem key={user.id} value={user.username}>
             <Box display="flex" alignItems="center">
               <Typography>{user.username}</Typography>

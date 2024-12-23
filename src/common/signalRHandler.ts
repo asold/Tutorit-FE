@@ -18,7 +18,7 @@ class SignalRHandler {
         try {
             await connect.start();
             this.connection = connect;
-            console.log('SignalR connection established');
+            console.log('SignalR connection established with type:', type);
             this.keepAlive(connect);
             return connect;
         } catch (err) {

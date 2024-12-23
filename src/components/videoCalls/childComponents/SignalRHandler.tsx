@@ -21,6 +21,7 @@ const SignalRHandlerComponent = ({ token, onAccept, onDecline }) => {
     const signalRHandler = new SignalRHandler();
 
     useEffect(() => {
+        console.log("SignalRHandler initialized")
         const initializeConnection = async () => {
             try {
                 const connect = await signalRHandler.createSignalRConnection(2, token);
