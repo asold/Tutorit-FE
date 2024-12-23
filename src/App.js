@@ -11,12 +11,16 @@ import TeacherMainPage from './components/teacherComponents/TeacherMainPage.tsx'
 import StudentMain from './components/studentComponents/StudentMain.tsx';
 import PrivateRoute from './common/PrivateRoute.tsx';
 import TutorCourseDetails from './components/course/tutor/TutorCourseDetails.tsx'
-
+import IncommingCallHandler from './components/videoCalls/globalCall/IncommingCallHandler.tsx'
+import CallerReceiverBox from './components/videoCalls/globalCall/CallerReceiverBox.tsx';
 function App() {
   return (
     <Router>
       <div>
         <LanguageSwitcher />
+        <IncommingCallHandler/>
+        <CallerReceiverBox/>
+
         <Routes>
           <Route path="/login" element={<LoginComponent />} />
           <Route path="/video" element={<PrivateRoute><VideoCallPage /></PrivateRoute>} />
