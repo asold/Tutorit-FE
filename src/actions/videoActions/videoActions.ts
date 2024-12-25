@@ -1,7 +1,7 @@
 import { AnyAction, Dispatch } from 'redux';
 import { ThunkAction } from 'redux-thunk';
 import { HubConnection } from '@microsoft/signalr';
-import { ACCEPT_CALL, DECLINE_CALL } from '../../types/videoCallTypes.ts';
+import { ACCEPT_CALL, ACTIVATE_CALLING_MODAL, DEACTIVATE_CALLING_MODAL, DECLINE_CALL } from '../../types/videoCallTypes.ts';
 import axios from 'axios';
 import { SERVER_ADDRESS } from '../../common/constants.ts';
 import { SET_CALL_PARTNER_USERNAME } from "../../types/commonTypes.ts";
@@ -38,8 +38,6 @@ export const acceptCall = (connectionId: string): ThunkAction<void, {}, {}, AnyA
         }
     };
 
-
-
 export const declineCall = (): ThunkAction<void, {}, {}, AnyAction> => async(dispatch:Dispatch)=>{
     dispatch({type:DECLINE_CALL});
 }
@@ -56,3 +54,11 @@ export const setReceiverConnectionId = (connectionId:string): ThunkAction<void, 
 export const setCallPartnerUsername = (username: string): ThunkAction<void, {}, {}, AnyAction> => async (dispatch: Dispatch) => {
     dispatch({ type: SET_CALL_PARTNER_USERNAME, payload: username });
   };
+
+export const activateCallingModal =(): ThunkAction<void, {}, {}, AnyAction> => async(dispatch:Dispatch)=>{
+    dispatch({type:ACTIVATE_CALLING_MODAL})
+}
+
+export const closeVideoCallModal =(): ThunkAction<void, {}, {}, AnyAction> => async(dispatch:Dispatch)=>{
+    dispatch({type:DEACTIVATE_CALLING_MODAL})
+}

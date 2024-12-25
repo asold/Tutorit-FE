@@ -94,7 +94,7 @@ const TeacherMainPage: React.FC = () => {
                 >
                     <AddIcon/>
                 </Fab>
-                <Button 
+                {/* <Button 
                     sx={{
                         backgroundColor: '#6db5a0', 
                         color: '#ffffff', 
@@ -105,7 +105,7 @@ const TeacherMainPage: React.FC = () => {
                     variant="contained"
                 >
                     Make a Video Call    
-                </Button>
+                </Button> */}
             </Box>
             
             <Dialog open={open} onClose={handleClose}>

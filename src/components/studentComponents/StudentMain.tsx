@@ -16,14 +16,14 @@ const StudentMain: React.FC = () => {
       <Typography variant="h4" gutterBottom>
         Student Main
       </Typography>
-      <Button
+      {/* <Button
         variant="contained"
         color="primary"
         onClick={handleNavigateToCall}
         sx={{ padding: '10px 20px', marginTop: '20px', marginBottom: '20px' }}
       >
         Call someone
-      </Button>
+      </Button> */}
 
       {/* List of Courses Section */}
       <Box sx={{ display: 'flex', justifyContent: 'center', marginBottom: '40px' }}>

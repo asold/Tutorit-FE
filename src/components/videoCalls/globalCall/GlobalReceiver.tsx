@@ -8,6 +8,7 @@ import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 
 
 import { SERVER_ADDRESS } from '../../../common/constants.ts';
+import { Box, Typography } from '@mui/material';
 
 const GlobalReceiver = ({ token }) => {
     const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -116,17 +117,52 @@ const GlobalReceiver = ({ token }) => {
     }, [connection, setupMediaSource, dispatch, hasDispatched]);
 
     return (
-        <div>
+        <Box
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                // gap: 2,
+                // p: 2,
+                border: '0.1rem solid #ddd',
+                borderRadius: '0.3rem',
+                overflow: 'hidden',
+                height: '100%',
+                width: '100%',
+            }}
+        >
             {error ? (
-                <div>Error: {error}</div>
+                <Typography color="error">{error}</Typography>
             ) : (
                 <>
-                    {/* <h1>Connection ID: {connection ? connection.connectionId : 'Not connected'}</h1> */}
-                    <h2>Partner</h2>
-                    <video ref={videoRef} autoPlay muted />
+                    <Typography variant="h6" fontWeight="bold">
+                        Partner
+                    </Typography>
+                    <Box
+                        sx={{
+                            width: '100%',
+                            height: '100%',
+                            mt: 2,
+                            borderRadius: '0.3rem',
+                            overflow: 'hidden',
+                            backgroundColor: '#000',
+                        }}
+                    >
+                        <video
+                            ref={videoRef}
+                            autoPlay
+                            muted
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                            }}
+                        />
+                    </Box>
                 </>
             )}
-        </div>
+        </Box>
     );
 };
 

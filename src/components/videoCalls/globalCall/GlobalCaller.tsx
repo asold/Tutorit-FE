@@ -4,6 +4,7 @@ import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import SignalRHandler from '../../../common/signalRHandler.ts';
 import { HubConnection } from '@microsoft/signalr';
+import { Box, Button, Typography } from '@mui/material';
 
 interface CallerProps {
     token: string | null;
@@ -187,40 +188,76 @@ const GobalCaller: React.FC<CallerProps> = ({ token, callPartnerUsername }) => {
     }, [mediaRecorder, videoStream, connection, signalRHandler]);
 
     return (
-        <div key={key}>
-            <h1>Make Video Call</h1>
+        <Box
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                // gap: 2,
+                // p: 2,
+                border: '0.1rem solid #ddd',
+                borderRadius: '0.3rem',
+                overflow: 'hidden',
+                height: '100%',
+                width: '100%',
+            }}
+        >
+            {/* <Typography variant="h6" fontWeight="bold">
+                Make Video Call
+            </Typography> */}
 
-            {/*
-              Username is now selected outside.
-              Just show the current partner or any relevant info if you wish:
-            */}
-            <p style={{ marginBottom: '8px' }}>
-              <strong>Selected Partner:</strong> {callPartnerUsername || '(none)'}
-            </p>
+            <Typography variant="body2">
+                <strong>Selected Partner:</strong> {callPartnerUsername || '(none)'}
+            </Typography>
 
-            <div>
-                <button
+            <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+                    variant="contained"
+                    color="primary"
                     onClick={handleStartCameraClick}
                     disabled={
                         isConnecting ||
                         isRecording ||
                         receiverCallAccepted ||
                         isReceiving ||
-                        !callPartnerUsername // same disabling logic
+                        !callPartnerUsername
                     }
                 >
                     Call Person
-                </button>
-                <button
+                </Button>
+                <Button
+                    variant="contained"
+                    color="secondary"
                     onClick={handleStopCameraClick}
                     disabled={isConnecting || !isRecording}
                 >
                     Stop Call
-                </button>
-            </div>
+                </Button>
+            </Box>
 
-            <video ref={videoRef} autoPlay playsInline />
-        </div>
+            <Box
+                sx={{
+                    width: '100%',
+                    height: '100%',
+                    mt: 2,
+                    borderRadius: '0.3rem',
+                    overflow: 'hidden',
+                    backgroundColor: '#000',
+                }}
+            >
+                <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                    }}
+                />
+            </Box>
+        </Box>
     );
 };
 

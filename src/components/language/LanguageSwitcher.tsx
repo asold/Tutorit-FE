@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Box } from '@mui/material';
+import { Button, Box, IconButton } from '@mui/material';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateGlobalLanguage } from '../../actions/langauge/languageActions.ts';
 import { useNavigate } from 'react-router-dom';
 import { loginUser, logoutUser } from '../../actions/loginActions/loginAction.ts'; // Import loginUser action
+import VideoCallIcon from '@mui/icons-material/VideoCall';
+import { activateCallingModal } from '../../actions/videoActions/videoActions.ts';
 
 const LanguageSwitcher: React.FC = () => {
   const { i18n } = useTranslation();
@@ -44,7 +46,28 @@ const LanguageSwitcher: React.FC = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2 }}>
+    {/* Left-aligned VideoCallIcon */}
+    <Box sx={{  }}>
+      {isLoggedIn && (
+        <IconButton
+          onClick={() => dispatch(activateCallingModal()) }
+          sx={{
+            backgroundColor: '#6db5a0',
+            color: '#ffffff',
+            '&:hover': { backgroundColor: '#5a9d8d' },
+            borderRadius: '50%', // Fully rounded
+            width: '3.5rem',
+            height: '3.5rem'
+          }}
+        >
+          <VideoCallIcon fontSize="large" />
+        </IconButton>
+      )}
+    </Box>
+  
+    {/* Right-aligned Buttons */}
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <Button onClick={() => changeLanguage('en')}>English</Button>
       <Button onClick={() => changeLanguage('ro')}>Română</Button>
       {isLoggedIn && (
@@ -58,6 +81,8 @@ const LanguageSwitcher: React.FC = () => {
         </Button>
       )}
     </Box>
+  </Box>
+  
   );
 };
 
