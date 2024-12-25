@@ -101,6 +101,7 @@ const UserStatusDropdown: React.FC<UserStatusDropdownProps> = ({ token, onUserna
         <Box
           ref={anchorRef}
           onClick={handleToggle}
+          onTouchStart={handleToggle}
           sx={{
             display: 'flex',
             alignItems: 'center',
@@ -145,13 +146,14 @@ const UserStatusDropdown: React.FC<UserStatusDropdownProps> = ({ token, onUserna
         }}
       >
         <Paper>
-          <ClickAwayListener onClickAway={handleClose}>
+          <ClickAwayListener onTouchStart={handleClose} onClickAway={handleClose}>
             <MenuList>
               {users.length > 0 ? (
                 users.map((user) => (
                   <MenuItem
                     key={user.id}
                     onClick={() => handleSelect(user.username)}
+                    onTouchStart={() => handleSelect(user.username)}
                   >
                     <Box display="flex" alignItems="center">
                       <Typography>{user.username}</Typography>
