@@ -52,6 +52,7 @@ const LanguageSwitcher: React.FC = () => {
       {isLoggedIn && (
         <IconButton
           onClick={() => dispatch(activateCallingModal()) }
+          onTouchStart={() => dispatch(activateCallingModal()) }
           sx={{
             backgroundColor: '#6db5a0',
             color: '#ffffff',

@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import SignalRHandler from '../../../common/signalRHandler.ts';
 import { HubConnection } from '@microsoft/signalr';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, Typography, Modal, Backdrop, Fade } from '@mui/material';
+import IncommingCallHandler from './IncommingCallHandler.tsx';
 
 interface GlobalCallerReceiverProps {
     token: string | null;
@@ -15,8 +16,14 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     // State Management
     const [connection, setConnection] = useState<HubConnection | null>(null);
     const [peerConnection, setPeerConnection] = useState<RTCPeerConnection | null>(null);
+    const [incomingOffer, setIncomingOffer] = useState<any | null>(null); // Store SDP offer
     const [isCalling, setIsCalling] = useState(false);
     const [isReceiving, setIsReceiving] = useState(false);
+    const [showModal, setShowModal] = useState(false); // Modal for Accept/Decline Call
+    const [callerUsername, setCallerUsername] = useState<string>('');
+
+    const handleCallAccepted = async () => setShowModal(false);
+    const handleCallDeclined = () => setShowModal(false);
 
     // Video Refs
     const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -25,17 +32,23 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
     const signalRHandler = new SignalRHandler();
 
-    // SignalR Connection Initialization
+    // 📡 **Initialize SignalR Connection**
     const initializeSignalRConnection = useCallback(async () => {
         if (!connection && token) {
             try {
                 const connect = await signalRHandler.createSignalRConnection(0, token);
                 setConnection(connect);
 
-                // Handle incoming call offers
-                signalRHandler.onConnectionEvent(connect, 'receiveOffer', async (offer) => {
-                    console.log('Received WebRTC Offer:', offer);
-                    await handleReceiveOffer(offer);
+                if (connect.state !== 'Connected') {
+                    await connect.start();
+                    console.log('SignalR Connection started successfully');
+                }
+
+                // Handle Incoming WebRTC Offer
+                signalRHandler.onConnectionEvent(connect, 'receiveOffer', async (offer, senderUsername) => {
+                    setIncomingOffer({ offer, senderUsername }); // Store both offer and senderUsername
+                    setShowModal(true); // Show modal for user acceptance
+                    setCallerUsername(senderUsername);
                 });
 
                 // Handle ICE candidates
@@ -43,6 +56,13 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                     console.log('Received ICE Candidate:', candidate);
                     await handleReceiveICECandidate(candidate);
                 });
+
+                // Handle SDP Answer from the Receiver
+                signalRHandler.onConnectionEvent(connect, 'receiveAnswer', async (answer) => {
+                    console.log('Received SDP Answer:', answer);
+                    await handleReceiveAnswer(answer);
+                });
+
             } catch (error) {
                 console.error('SignalR connection failed:', error);
             }
@@ -51,48 +71,56 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
     useEffect(() => {
         initializeSignalRConnection();
-        return () => {
-            connection && signalRHandler.stopConnection(connection);
-            peerConnection && peerConnection.close();
-        };
-    }, [initializeSignalRConnection, connection, peerConnection]);
 
-    // Initialize WebRTC Connection
+        return () => {
+            if (connection) {
+                signalRHandler.stopConnection(connection);
+            }
+            if (peerConnection) {
+                peerConnection.close();
+            }
+        };
+    }, [initializeSignalRConnection]);
+
+    // 🎥 **Initialize WebRTC Connection**
     const initializeWebRTCConnection = useCallback(() => {
         const pc = new RTCPeerConnection({
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' }, // Free STUN server
-            ],
+            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
         });
 
-        // Handle ICE Candidate Event
         pc.onicecandidate = (event) => {
             if (event.candidate && connection) {
-                console.log('Sending ICE Candidate:', event.candidate);
                 signalRHandler.sendMessageThroughConnection(
                     connection,
-                    'sendICECandidate',
+                    'SendICECandidate',
                     callPartnerUsername,
                     event.candidate
                 );
             }
         };
 
-        // Handle Remote Stream
         pc.ontrack = (event) => {
+            console.log('Received remote track:', event.streams);
             if (remoteVideoRef.current && event.streams[0]) {
                 remoteVideoRef.current.srcObject = event.streams[0];
             }
         };
+        
 
         setPeerConnection(pc);
         return pc;
     }, [connection, callPartnerUsername]);
 
-    // Start Local Video Stream
+    // 🎥 **Start Local Video Stream**
     const startLocalStream = useCallback(async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const constraints = isCalling
+            ? { video: true, audio: true } // Caller uses both video and audio
+            : { video: false, audio: true }; // Receiver skips video to avoid conflict
+
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+            // const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             if (localVideoRef.current) {
                 localVideoRef.current.srcObject = stream;
             }
@@ -100,61 +128,83 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             stream.getTracks().forEach((track) => {
                 peerConnection?.addTrack(track, stream);
             });
-
-            console.log('Local stream started');
         } catch (error) {
             console.error('Failed to start local stream:', error);
         }
     }, [peerConnection]);
 
-    // Handle Call Start
+    // 📞 **Handle Call Start**
     const handleStartCall = useCallback(async () => {
-        if (!connection || !peerConnection) return;
+        if (!connection) {
+            console.error('SignalR connection is not established');
+            return;
+        }
 
+        const pc = peerConnection ?? initializeWebRTCConnection();
+        setPeerConnection(pc);
         setIsCalling(true);
-        await startLocalStream();
 
         try {
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
+            await startLocalStream();
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
 
-            // Send SDP Offer through SignalR
             await signalRHandler.sendMessageThroughConnection(
                 connection,
-                'sendOffer',
+                'SendOffer',
                 callPartnerUsername,
                 offer
             );
+
             console.log('SDP Offer sent');
         } catch (error) {
             console.error('Failed to start call:', error);
         }
-    }, [connection, peerConnection, callPartnerUsername, startLocalStream]);
+    }, [peerConnection, callPartnerUsername, startLocalStream, initializeWebRTCConnection]);
 
-    // Handle Receiving Offer
-    const handleReceiveOffer = useCallback(async (offer) => {
-        if (!peerConnection) return;
+    // ✅ **Accept Offer**
+    const handleAcceptOffer = useCallback(async () => {
+        if (!peerConnection) initializeWebRTCConnection();
+        if (!incomingOffer?.offer) return;
+    
+        try {
+            await startLocalStream();
 
-        await startLocalStream();
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            console.log("SDP offer from Caller:", incomingOffer.offer); 
 
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
+            await peerConnection?.setRemoteDescription(new RTCSessionDescription(incomingOffer.offer));
+    
+            const answer = await peerConnection?.createAnswer();
+            await peerConnection?.setLocalDescription(answer);
 
-        if (connection) {
-            await signalRHandler.sendMessageThroughConnection(
-                connection,
-                'sendAnswer',
-                callPartnerUsername,
-                answer
-            );
+            console.log("SDP answer from Receiver:", answer);
+
+            if (connection) {
+                await signalRHandler.sendMessageThroughConnection(
+                    connection,
+                    'SendAnswer',
+                    callerUsername,
+                    answer
+                );
+            }
+    
+            setIsReceiving(true);
+            setShowModal(false);
+            console.log('SDP Answer sent');
+        } catch (error) {
+            console.error('Failed to accept offer:', error);
         }
+    }, [peerConnection, connection, callPartnerUsername, incomingOffer, startLocalStream]);
+    
 
-        setIsReceiving(true);
-        console.log('SDP Answer sent');
-    }, [peerConnection, connection, callPartnerUsername, startLocalStream]);
+    // ❌ **Decline Offer**
+    const handleDeclineOffer = useCallback(() => {
+        setIncomingOffer(null);
+        setShowModal(false);
+        console.log('Call declined by user');
+    }, []);
 
-    // Handle ICE Candidate
+        // Handle ICE Candidate
     const handleReceiveICECandidate = useCallback(async (candidate) => {
         if (!peerConnection) return;
         try {
@@ -183,14 +233,53 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         console.log('Call stopped');
     }, [peerConnection]);
 
+    // Handle SDP Answer from Receiving User
+    const handleReceiveAnswer = useCallback(async (answer) => {
+        if (!peerConnection) {
+            console.error('PeerConnection is not initialized');
+            return;
+        }
+    
+        try {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+            console.log('SDP Answer successfully set as Remote Description');
+        } catch (error) {
+            console.error('Failed to set remote description with SDP Answer:', error);
+        }
+    }, [peerConnection]);
+    
+
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Typography variant="h6">Video Call with {callPartnerUsername}</Typography>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-                <video ref={localVideoRef} autoPlay muted style={{ width: '48%', borderRadius: '8px', background: '#000' }} />
-                <video ref={remoteVideoRef} autoPlay style={{ width: '48%', borderRadius: '8px', background: '#000' }} />
+        <Box
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                padding: 2,
+                width: '100%',
+                boxSizing: 'border-box',
+            }}
+        >
+            {/* Call Information */}
+            <Typography variant="h6" sx={{ textAlign: 'center', fontWeight: 'bold', marginBottom: 1 }}>
+                Video Call with {callPartnerUsername}
+            </Typography>
+
+            {/* Video Display */}
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', alignItems: 'center' }}>
+                {/* Local Video */}
+                <Box sx={{ flex: 1, border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#000' }}>
+                    <video ref={localVideoRef} autoPlay muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </Box>
+
+                {/* Remote Video */}
+                <Box sx={{ flex: 1, border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#000' }}>
+                    <video ref={remoteVideoRef} autoPlay style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </Box>
             </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
+
+            {/* Control Buttons */}
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', marginTop: 2 }}>
                 <Button variant="contained" onClick={handleStartCall} disabled={isCalling || isReceiving}>
                     Start Call
                 </Button>
@@ -198,8 +287,32 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                     Stop Call
                 </Button>
             </Box>
+
+            {/* Modal for Call Accept/Decline */}
+            <Modal open={showModal} onClose={handleDeclineOffer}>
+                <Box sx={modalStyle}>
+                    <Typography variant="h6">📞 Incoming Call</Typography>
+                    {incomingOffer?.senderUsername && (
+                        <Typography variant="body1">From: {incomingOffer.senderUsername}</Typography>
+                    )}
+                    <Button variant="contained" color="success" onClick={handleAcceptOffer}>Accept</Button>
+                    <Button variant="contained" color="error" onClick={handleDeclineOffer}>Decline</Button>
+                </Box>
+            </Modal>
+
         </Box>
     );
 };
 
+const modalStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    bgcolor: 'background.paper',
+    boxShadow: 24,
+    p: 4,
+    borderRadius: '8px',
+    textAlign: 'center',
+};
 export default GlobalCallerReceiver;

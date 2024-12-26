@@ -12,6 +12,7 @@ import IncommingCallHandler from './IncommingCallHandler.tsx';
 import {closeVideoCallModal} from '../../../actions/videoActions/videoActions.ts'
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
+import GlobalCallerReceiver from './GlobalCallerReceiver.tsx';
 
 const CallerReceiverBox: React.FC = () => {
     const token = localStorage.getItem('token');
@@ -142,21 +143,12 @@ const CallerReceiverBox: React.FC = () => {
                                 onUsernameSelect={setCallPartnerUsername}
                             />
                         </Box>
-                        <Box>
+                        {/* <Box>
                             <IncommingCallHandler token={token} onAccept={handleCallAccepted} onDecline={handleCallDeclined} />
-                        </Box>
-                        {/*Video Call Sections*/}
-
+                        </Box> */}
+                        {/*Unified GlobalCallerReceiver*/}
                         <Box
                             sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                // gap: '0.5rem',
-                                height: '100%', 
-                            }}
-                        >
-                            {/*Caller Section*/}
-                            <Box sx={{ 
                                 flex: 1,
                                 border: '0.1rem solid #ddd',
                                 borderRadius: '0.3rem',
@@ -164,27 +156,14 @@ const CallerReceiverBox: React.FC = () => {
                                 display: 'flex',
                                 justifyContent: 'center',
                                 alignItems: 'center',
-                                
-                            }}>
-                                <GlobalCaller token={token} callPartnerUsername={callPartnerUsername} />
-                            </Box>
-
-                            {/*Receiver Section*/}
-                            <Box sx={{ 
-                                  flex: 1,
-                                  border: '0.1rem solid #ddd',
-                                  borderRadius: '0.3rem',
-                                  overflow: 'hidden',
-                                  display: 'flex',
-                                  justifyContent: 'center',
-                                  alignItems: 'center',
-                                 
-                                 }}>
-                                <GlobalReceiver token={token} />
-                            </Box>
-
+                                background: '#f9f9f9',
+                            }}
+                        >
+                            <GlobalCallerReceiver
+                                token={token}
+                                callPartnerUsername={callPartnerUsername}
+                            />
                         </Box>
-                        
                     </Box>
                 )}
             </Box>

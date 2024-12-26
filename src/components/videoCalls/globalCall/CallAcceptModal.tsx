@@ -1,19 +1,54 @@
-import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
-import { MessagePackHubProtocol } from '@microsoft/signalr-protocol-msgpack';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { Modal, Box, Typography, Button } from '@mui/material';
 
-const CallAcceptModal = ({ onAccept, onDecline,  onReceiveCall, token}) => {
+interface CallAcceptModalProps {
+    onAccept: () => void;
+    onDecline: () => void;
+    token: string | null;
+}
 
-    const [callReceived, setCallReceived] = useState(false);
-    const [connection, setConnection] = useState<HubConnection | null>(null);
-
-    
+const CallAcceptModal: React.FC<CallAcceptModalProps> = ({ onAccept, onDecline }) => {
     return (
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1000, background: 'white', padding: '20px', border: '1px solid black' }}>
-            <h1>Incoming Call</h1>
-            <button onTouchStart ={onAccept} onClick={onAccept}>Accept</button>
-            <button onTouchStart={onDecline} onClick={onDecline}>Decline</button>
-        </div>
+        <Modal
+            open={true} // Always open when called
+            onClose={onDecline}
+            aria-labelledby="call-modal-title"
+            aria-describedby="call-modal-description"
+            closeAfterTransition
+            BackdropProps={{
+                timeout: 500,
+            }}
+        >
+            <Box
+                sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: 300,
+                    bgcolor: 'background.paper',
+                    boxShadow: 24,
+                    borderRadius: '8px',
+                    p: 3,
+                    textAlign: 'center',
+                }}
+            >
+                <Typography id="call-modal-title" variant="h6" sx={{ mb: 2 }}>
+                    📞 Incoming Call
+                </Typography>
+                <Typography id="call-modal-description" sx={{ mb: 3 }}>
+                    You have an incoming call. Would you like to accept it?
+                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-around' }}>
+                    <Button variant="contained" color="success" onClick={onAccept}>
+                        Accept
+                    </Button>
+                    <Button variant="contained" color="error" onClick={onDecline}>
+                        Decline
+                    </Button>
+                </Box>
+            </Box>
+        </Modal>
     );
 };
 
