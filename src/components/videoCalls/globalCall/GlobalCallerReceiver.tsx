@@ -90,6 +90,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
         pc.onicecandidate = (event) => {
             if (event.candidate && connection) {
+                console.log("Sending the ICE Candidate to the other peer:", event.candidate);
                 signalRHandler.sendMessageThroughConnection(
                     connection,
                     'SendICECandidate',
@@ -106,21 +107,15 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             }
         };
         
-
-        setPeerConnection(pc);
+        // console.log("peerConnection", pc);
+        // setPeerConnection(pc);
         return pc;
     }, [connection, callPartnerUsername]);
 
     // 🎥 **Start Local Video Stream**
     const startLocalStream = useCallback(async () => {
         try {
-            const constraints = isCalling
-            ? { video: true, audio: true } // Caller uses both video and audio
-            : { video: false, audio: true }; // Receiver skips video to avoid conflict
-
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-            // const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             if (localVideoRef.current) {
                 localVideoRef.current.srcObject = stream;
             }
@@ -164,9 +159,18 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
     // ✅ **Accept Offer**
     const handleAcceptOffer = useCallback(async () => {
-        if (!peerConnection) initializeWebRTCConnection();
+        console.log("peerConnection", peerConnection);
+        console.log("incomingOffer", incomingOffer);
+        if (!peerConnection){
+            const pc = initializeWebRTCConnection();
+            setPeerConnection(pc);
+        }
+
         if (!incomingOffer?.offer) return;
     
+        console.log("peerConnection On Accepting Offer", peerConnection);
+        console.log("incomming offer On Accepting Offer", incomingOffer);
+
         try {
             await startLocalStream();
 
@@ -280,10 +284,10 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
             {/* Control Buttons */}
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', marginTop: 2 }}>
-                <Button variant="contained" onClick={handleStartCall} disabled={isCalling || isReceiving}>
+                <Button variant="contained" onTouchStart ={handleStartCall} onClick={handleStartCall} disabled={isCalling || isReceiving}>
                     Start Call
                 </Button>
-                <Button variant="contained" color="error" onClick={handleStopCall}>
+                <Button variant="contained" color="error" onTouchStart ={handleStopCall} onClick={handleStopCall}>
                     Stop Call
                 </Button>
             </Box>
