@@ -20,7 +20,6 @@ const GobalCaller: React.FC<CallerProps> = ({ token, callPartnerUsername }) => {
     const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
     const [receiverCallAccepted, setReceiverCallAccepted] = useState(false);
-    const [key, setKey] = useState(0);
 
     // Keep using your Redux states, if needed:
     const isReceiving = useSelector((state: any) => state.receiver.isReceiving);
@@ -29,6 +28,7 @@ const GobalCaller: React.FC<CallerProps> = ({ token, callPartnerUsername }) => {
     // The rest of your logic for building and managing the connection is unchanged:
     const signalRHandler = new SignalRHandler();
 
+    // the connection through a socket is initialized for the Global Caller component
     const initializeConnection = useCallback(async () => {
         if (!connection && !isConnecting) {
             setIsConnecting(true);
@@ -40,7 +40,6 @@ const GobalCaller: React.FC<CallerProps> = ({ token, callPartnerUsername }) => {
     
                     // Keep your event listeners as is
                     signalRHandler.onConnectionEvent(connect, 'callaccepted', () => {
-                        console.log('Call accepted by receiver');
                         setReceiverCallAccepted(true);
                     });
                 }
@@ -61,7 +60,6 @@ const GobalCaller: React.FC<CallerProps> = ({ token, callPartnerUsername }) => {
         };
     }, [connection, initializeConnection]);
 
-    // The rest of your logic remains exactly the same
     const startRecording = useCallback((stream: MediaStream, connectionType: string) => {
         const options = { mimeType: 'video/webm; codecs=vp8' };
         if (!MediaRecorder.isTypeSupported(options.mimeType)) {
@@ -100,15 +98,15 @@ const GobalCaller: React.FC<CallerProps> = ({ token, callPartnerUsername }) => {
 
         recorder.onerror = (error) => console.error('MediaRecorder error:', error);
         recorder.onstart = () => {
-            console.log('MediaRecorder started');
+            console.log('MediaRecorder GlobalCaller started');
             setIsRecording(true);
         };
         recorder.onstop = () => {
-            console.log('MediaRecorder stopped');
+            console.log('MediaRecorder GlobalCaller stopped');
             setIsRecording(false);
         };
 
-        recorder.start(100);
+        recorder.start(50);
         setMediaRecorder(recorder);
     }, [connection, callPartnerUsername, initialCallerUserName, signalRHandler]);
 
@@ -131,6 +129,8 @@ const GobalCaller: React.FC<CallerProps> = ({ token, callPartnerUsername }) => {
     }, [isRecording, startRecording]);
 
     const handleStartCameraClick = useCallback(async () => {
+        //1. This part sends the request through the server to the partner
+        // so that the partner can accept the call
         if (connection) {
             console.log('Requesting call with: ', callPartnerUsername);
             await signalRHandler.sendMessageThroughConnection(
@@ -142,24 +142,22 @@ const GobalCaller: React.FC<CallerProps> = ({ token, callPartnerUsername }) => {
     }, [connection, callPartnerUsername, signalRHandler]);
 
     useEffect(() => {
+        //2. The original sender/caller starts recording the video and sending it
         if (receiverCallAccepted) {
-            console.log('Starting camera after Call Accepted!!');
             startCamera('ReceiveVideoStream');
         }
     }, [receiverCallAccepted, startCamera]);
 
     useEffect(() => {
+        //3. If this is the receiver, start recording the video and sending it back
         if (isReceiving) {
-            console.log('Starting camera after isReceiving is True!!!');
             startCamera('SendVideoToSender');
         }
     }, [isReceiving, initialCallerUserName, startCamera]);
 
     const handleStopCameraClick = useCallback(async () => {
-        console.log('Stop camera click');
         if (mediaRecorder && mediaRecorder.state === "recording") {
             mediaRecorder.stop();
-            console.log('MediaRecorder stopped');
         }
 
         if (videoStream) {
@@ -177,14 +175,12 @@ const GobalCaller: React.FC<CallerProps> = ({ token, callPartnerUsername }) => {
             } catch (error) {
                 console.error('Error notifying server:', error);
             }
-
             console.log('Closing SignalR connection...');
             await signalRHandler.stopConnection(connection);
             setConnection(null);
         }
 
         setReceiverCallAccepted(false);
-        setKey(prevKey => prevKey + 1);
     }, [mediaRecorder, videoStream, connection, signalRHandler]);
 
     return (
