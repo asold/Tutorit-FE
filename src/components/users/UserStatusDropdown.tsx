@@ -35,38 +35,39 @@ const UserStatusDropdown: React.FC<UserStatusDropdownProps> = ({ token, onUserna
 
   const anchorRef = useRef<HTMLDivElement>(null);
 
+  const fetchUserStatuses = async () => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const encodedToken = encodeURIComponent(token);
+      const response = await fetch(`${SERVER_ADDRESS}/tutorit/User/user_status?token=${encodedToken}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      console.log('User statuses:', data);
+      setUsers(data);
+    } catch (error) {
+      console.error('Error fetching user statuses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   /**
    * Fetch user statuses on mount
    */
   useEffect(() => {
-    const fetchUserStatuses = async () => {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const encodedToken = encodeURIComponent(token);
-        const response = await fetch(`${SERVER_ADDRESS}/tutorit/User/user_status?token=${encodedToken}`, {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-
-        const data = await response.json();
-        setUsers(data);
-      } catch (error) {
-        console.error('Error fetching user statuses:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUserStatuses();
   }, [token]);
 
@@ -80,6 +81,7 @@ const UserStatusDropdown: React.FC<UserStatusDropdownProps> = ({ token, onUserna
   };
 
   const handleToggle = () => {
+    fetchUserStatuses();
     setIsOpen((prev) => !prev);
   };
 
@@ -146,7 +148,9 @@ const UserStatusDropdown: React.FC<UserStatusDropdownProps> = ({ token, onUserna
         }}
       >
         <Paper>
-          <ClickAwayListener onTouchStart={handleClose} onClickAway={handleClose}>
+          <ClickAwayListener 
+                        // onTouchStart={handleClose} 
+                        onClickAway={handleClose}>
             <MenuList>
               {users.length > 0 ? (
                 users.map((user) => (

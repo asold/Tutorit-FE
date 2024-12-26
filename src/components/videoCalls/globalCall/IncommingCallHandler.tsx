@@ -3,44 +3,25 @@ import { useDispatch } from 'react-redux';
 import { AnyAction } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import SignalRHandler from '../../../common/signalRHandler.ts';
-import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
-
-
+import { HubConnection } from '@microsoft/signalr';
 import { setInitialCallerUserName } from '../../../actions/videoActions/videoActions.ts';
 import CallAcceptModal from './CallAcceptModal.tsx';
 
-const IncommingCallHandler = ({ token, onAccept, onDecline }) => {
+interface IncommingCallHandlerProps {
+    token: string | null;
+    onAccept: () => void;
+    onDecline: () => void;
+    connection: HubConnection | null;
+}
+
+const IncommingCallHandler: React.FC<IncommingCallHandlerProps> = ({ token, onAccept, onDecline, connection }) => {
     const [callReceived, setCallReceived] = useState(false);
-    const [connection, setConnection] = useState<HubConnection | null>(null);
     const [showModal, setShowModal] = useState(false);
-    const [key, setKey] = useState(0); // Add a key state to force re-render
+    const [key, setKey] = useState(0); // Force re-render on reset
     const [callerConnectionId, setCallerConnectionId] = useState("");
 
-    
-
     const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
-
     const signalRHandler = new SignalRHandler();
-
-    useEffect(() => {
-        console.log("SignalRHandler initialized")
-        const initializeConnection = async () => {
-            try {
-                const connect = await signalRHandler.createSignalRConnection(2, token);
-                setConnection(connect);
-            } catch (err) {
-                console.error('Error while establishing SignalR connection:', err);
-            }
-        };
-
-        initializeConnection();
-
-        return () => {
-            if (connection) {
-                signalRHandler.stopConnection(connection);
-            }
-        };
-    }, [token]);
 
     useEffect(() => {
         if (connection && !callReceived) {
@@ -50,8 +31,8 @@ const IncommingCallHandler = ({ token, onAccept, onDecline }) => {
                 setCallReceived(true);
             };
 
-            // Step 1: In the receiver showing call.
-            signalRHandler.onConnectionEvent(connection, 'acceptcallrequest', handleAcceptCallRequest);
+            // Attach event listener to accept call
+            // signalRHandler.onConnectionEvent(connection, 'acceptcallrequest', handleAcceptCallRequest);
 
             return () => signalRHandler.offConnectionEvent(connection, 'acceptcallrequest', handleAcceptCallRequest);
         }
@@ -62,11 +43,9 @@ const IncommingCallHandler = ({ token, onAccept, onDecline }) => {
         setShowModal(false);
 
         if (connection) {
-            // Step 2: In the receiver accepting call.
             signalRHandler.sendMessageThroughConnection(connection, 'AcceptCallFromReceiver');
         }
 
-        // Reset the component by updating the key
         setCallReceived(false);
         dispatch(setInitialCallerUserName(callerConnectionId));
         setKey(prevKey => prevKey + 1);
@@ -75,23 +54,20 @@ const IncommingCallHandler = ({ token, onAccept, onDecline }) => {
     const handleModalDecline = () => {
         onDecline();
         setShowModal(false);
-
-        // Reset the component by updating the key
         setCallReceived(false);
         setKey(prevKey => prevKey + 1);
     };
 
     return (
-        <div key={key}>
+        <>
             {showModal && (
                 <CallAcceptModal
                     onAccept={handleModalAccept}
                     onDecline={handleModalDecline}
-                    onReceiveCall={() => {}}
                     token={token}
                 />
             )}
-        </div>
+        </>
     );
 };
 
