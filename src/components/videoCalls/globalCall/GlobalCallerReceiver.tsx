@@ -96,23 +96,54 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     
         pc.onicecandidate = (event) => {
             if (event.candidate && connection) {
-                console.log("Sending the ICE Candidate to the other peer:", event.candidate);
+                console.log("Sending ICE Candidate to the other peer:", event.candidate);
                 signalRHandler.sendMessageThroughConnection(
                     connection,
                     'SendICECandidate',
                     callPartnerUsername,
                     event.candidate
                 );
+            } else if (!event.candidate) {
+                console.log("ICE Candidate gathering complete.");
             }
         };
+        
+    
+        // pc.ontrack = (event) => {
+        //     console.log('Received remote track:', event.streams);
+        //     if (remoteVideoRef.current && event.streams[0]) {
+        //         console.log('Setting remote stream to video element');
+        //         remoteVideoRef.current.srcObject = event.streams[0];
+        //     }
+        // };
     
         pc.ontrack = (event) => {
             console.log('Received remote track:', event.streams);
-            if (remoteVideoRef.current && event.streams[0]) {
-                remoteVideoRef.current.srcObject = event.streams[0];
+            if (remoteVideoRef.current) {
+                const remoteStream = remoteVideoRef.current.srcObject as MediaStream | null;
+                if (remoteStream) {
+                    event.streams[0].getTracks().forEach(track => {
+                        if (!remoteStream.getTracks().includes(track)) {
+                            remoteStream.addTrack(track);
+                        }
+                    });
+                } else {
+                    remoteVideoRef.current.srcObject = event.streams[0];
+                }
             }
         };
-    
+        console.log('Remote Video Ref:', remoteVideoRef.current);
+        console.log('Remote Video Stream:', remoteVideoRef.current?.srcObject);
+
+
+        pc.oniceconnectionstatechange = () => {
+            console.log('ICE Connection State:', pc.iceConnectionState);
+            if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
+                console.warn('ICE connection failed or disconnected');
+            }
+        };
+        
+
         console.log("WebRTC PeerConnection initialized:", pc);
         return pc;
     }, [connection, callPartnerUsername]);
@@ -201,16 +232,17 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             // ✅ Process ICE Candidate Queue
             if (iceCandidateQueue.length > 0) {
                 console.log("Processing queued ICE candidates:", iceCandidateQueue.length);
-                for (const queuedCandidate of iceCandidateQueue) {
+                iceCandidateQueue.forEach(async (queuedCandidate) => {
                     try {
                         await pc.addIceCandidate(new RTCIceCandidate(queuedCandidate));
                         console.log('Queued ICE Candidate added successfully');
                     } catch (error) {
                         console.error('Failed to add queued ICE candidate:', error);
                     }
-                }
+                });
                 setIceCandidateQueue([]); // Clear the queue after processing
             }
+
 
             setIsReceiving(true);
             setShowModal(false);
@@ -232,26 +264,46 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     // Handle ICE Candidate
     const handleReceiveICECandidate = useCallback(async (candidate) => {
         const pc = peerConnectionRef.current;
-    
-        // Validate candidate
-        if (!candidate || !candidate.candidate) {
-            console.warn('Received invalid ICE Candidate:', candidate);
-            return;
-        }
-    
         if (!pc) {
             console.warn('PeerConnection not ready, queuing ICE Candidate:', candidate);
             setIceCandidateQueue((prevQueue) => [...prevQueue, candidate]);
             return;
         }
     
-        try {
-            await pc.addIceCandidate(new RTCIceCandidate(candidate));
-            console.log('ICE Candidate added successfully');
-        } catch (error) {
-            console.error('Failed to add ICE candidate:', error);
+        if (candidate && candidate.candidate) {
+            try {
+                await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                console.log('ICE Candidate added successfully');
+            } catch (error) {
+                console.error('Failed to add ICE candidate:', error);
+            }
+        } else {
+            console.log('Empty ICE Candidate received, ignoring...');
         }
     }, []);
+    
+    // const handleReceiveICECandidate = useCallback(async (candidate) => {
+    //     const pc = peerConnectionRef.current;
+    
+    //     // Validate candidate
+    //     if (!candidate || !candidate.candidate) {
+    //         console.warn('Received invalid ICE Candidate:', candidate);
+    //         return;
+    //     }
+    
+    //     if (!pc) {
+    //         console.warn('PeerConnection not ready, queuing ICE Candidate:', candidate);
+    //         setIceCandidateQueue((prevQueue) => [...prevQueue, candidate]);
+    //         return;
+    //     }
+    
+    //     try {
+    //         await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    //         console.log('ICE Candidate added successfully');
+    //     } catch (error) {
+    //         console.error('Failed to add ICE candidate:', error);
+    //     }
+    // }, []);
     
 
     // Handle Stop Call
@@ -278,6 +330,20 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         if (!pc) {
             console.error('PeerConnection is not initialized');
             return;
+        }
+
+        // ✅ Process ICE Candidate Queue After SDP Answer
+        if (iceCandidateQueue.length > 0) {
+            console.log("Processing queued ICE candidates after receiving SDP Answer:", iceCandidateQueue.length);
+            iceCandidateQueue.forEach(async (queuedCandidate) => {
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(queuedCandidate));
+                    console.log('Queued ICE Candidate added successfully');
+                } catch (error) {
+                    console.error('Failed to add queued ICE candidate:', error);
+                }
+            });
+            setIceCandidateQueue([]); // Clear the queue after processing
         }
     
         try {
@@ -314,7 +380,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
                 {/* Remote Video */}
                 <Box sx={{ flex: 1, border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#000' }}>
-                    <video ref={remoteVideoRef} autoPlay style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <video ref={remoteVideoRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </Box>
             </Box>
 
