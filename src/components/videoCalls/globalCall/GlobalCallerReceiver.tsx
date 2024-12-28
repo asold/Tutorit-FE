@@ -112,24 +112,16 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                     sdpMLineIndex: event.candidate.sdpMLineIndex,
                     usernameFragment: event.candidate.usernameFragment,
                 };
-                console.log('Sending ICE Candidate:', candidateData.candidate, "to partner: ", callPartnerUsername);
                 
                 // Resolve partner username correctly
-                const targetUsername = callPartnerUsername || incomingOffer?.senderUsername || "";
-
-                if (!targetUsername) {
-                    console.error('No valid callPartnerUsername or senderUsername found. ICE Candidate cannot be sent.');
-                    return;
-                }
-
-                console.log('Sending ICE Candidate:', candidateData.candidate, "to partner: ", targetUsername);
+                console.log('Sending ICE Candidate:', candidateData.candidate, "to partner: ", callerUsername);
 
 
 
                 signalRHandler.sendMessageThroughConnection(
                     connection,
                     'SendICECandidate',
-                    targetUsername,
+                    callerUsername,
                     candidateData
                 );
             } else if (!event.candidate) {
