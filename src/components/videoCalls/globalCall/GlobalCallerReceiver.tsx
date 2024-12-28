@@ -35,6 +35,16 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     const dispatch = useDispatch<ThunkDispatch<any, any, AnyAction>>();
     const signalRHandler = new SignalRHandler();
 
+    const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+
+    useEffect(() => {
+        if (remoteVideoRef.current && remoteStream) {
+            remoteVideoRef.current.srcObject = remoteStream;
+        }
+    }, [remoteStream]);
+
+
+
     // 📡 **Initialize SignalR Connection**
     const initializeSignalRConnection = useCallback(async () => {
         if (!connection && token) {
@@ -108,6 +118,11 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             }
         };
         
+        pc.ontrack = (event) => {
+            console.log('Received remote track:', event.streams);
+            setRemoteStream(event.streams[0]);
+        };
+    
     
         // pc.ontrack = (event) => {
         //     console.log('Received remote track:', event.streams);
@@ -119,29 +134,47 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     
         pc.ontrack = (event) => {
             console.log('Received remote track:', event.streams);
+        
             if (remoteVideoRef.current) {
-                const remoteStream = remoteVideoRef.current.srcObject as MediaStream | null;
-                if (remoteStream) {
+                if (!remoteVideoRef.current.srcObject) {
+                    remoteVideoRef.current.srcObject = event.streams[0];
+                    console.log('Remote video stream set successfully');
+                } else {
+                    // Add new tracks if they aren't already in the stream
+                    const remoteStream = remoteVideoRef.current.srcObject as MediaStream;
                     event.streams[0].getTracks().forEach(track => {
                         if (!remoteStream.getTracks().includes(track)) {
                             remoteStream.addTrack(track);
+                            console.log('Added new track to remote stream');
                         }
                     });
-                } else {
-                    remoteVideoRef.current.srcObject = event.streams[0];
                 }
+            } else {
+                console.warn('Remote video ref is null, cannot set remote stream');
             }
         };
+        
         console.log('Remote Video Ref:', remoteVideoRef.current);
         console.log('Remote Video Stream:', remoteVideoRef.current?.srcObject);
 
 
         pc.oniceconnectionstatechange = () => {
             console.log('ICE Connection State:', pc.iceConnectionState);
-            if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
-                console.warn('ICE connection failed or disconnected');
+            switch (pc.iceConnectionState) {
+                case 'connected':
+                case 'completed':
+                    console.log('ICE Connection successfully established');
+                    break;
+                case 'failed':
+                case 'disconnected':
+                case 'closed':
+                    console.warn('ICE Connection failed, disconnected, or closed');
+                    break;
+                default:
+                    console.log('ICE Connection state:', pc.iceConnectionState);
             }
         };
+        
         
 
         console.log("WebRTC PeerConnection initialized:", pc);
@@ -232,16 +265,21 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             // ✅ Process ICE Candidate Queue
             if (iceCandidateQueue.length > 0) {
                 console.log("Processing queued ICE candidates:", iceCandidateQueue.length);
-                iceCandidateQueue.forEach(async (queuedCandidate) => {
-                    try {
-                        await pc.addIceCandidate(new RTCIceCandidate(queuedCandidate));
-                        console.log('Queued ICE Candidate added successfully');
-                    } catch (error) {
-                        console.error('Failed to add queued ICE candidate:', error);
+                for (const queuedCandidate of iceCandidateQueue) {
+                    if (queuedCandidate && queuedCandidate.candidate && queuedCandidate.sdpMid !== null && queuedCandidate.sdpMLineIndex !== null) {
+                        try {
+                            await pc.addIceCandidate(new RTCIceCandidate(queuedCandidate));
+                            console.log('Queued ICE Candidate added successfully:', queuedCandidate);
+                        } catch (error) {
+                            console.error('Failed to add queued ICE candidate:', error);
+                        }
+                    } else {
+                        console.warn('Invalid queued ICE Candidate skipped:', queuedCandidate);
                     }
-                });
+                }
                 setIceCandidateQueue([]); // Clear the queue after processing
             }
+            
 
 
             setIsReceiving(true);
@@ -264,23 +302,25 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     // Handle ICE Candidate
     const handleReceiveICECandidate = useCallback(async (candidate) => {
         const pc = peerConnectionRef.current;
+    
         if (!pc) {
             console.warn('PeerConnection not ready, queuing ICE Candidate:', candidate);
             setIceCandidateQueue((prevQueue) => [...prevQueue, candidate]);
             return;
         }
     
-        if (candidate && candidate.candidate) {
+        if (candidate && candidate.candidate && candidate.sdpMid !== null && candidate.sdpMLineIndex !== null) {
             try {
                 await pc.addIceCandidate(new RTCIceCandidate(candidate));
-                console.log('ICE Candidate added successfully');
+                console.log('ICE Candidate added successfully:', candidate);
             } catch (error) {
                 console.error('Failed to add ICE candidate:', error);
             }
         } else {
-            console.log('Empty ICE Candidate received, ignoring...');
+            console.warn('Received invalid ICE Candidate:', candidate);
         }
     }, []);
+    
     
     // const handleReceiveICECandidate = useCallback(async (candidate) => {
     //     const pc = peerConnectionRef.current;
@@ -334,17 +374,22 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
         // ✅ Process ICE Candidate Queue After SDP Answer
         if (iceCandidateQueue.length > 0) {
-            console.log("Processing queued ICE candidates after receiving SDP Answer:", iceCandidateQueue.length);
-            iceCandidateQueue.forEach(async (queuedCandidate) => {
-                try {
-                    await pc.addIceCandidate(new RTCIceCandidate(queuedCandidate));
-                    console.log('Queued ICE Candidate added successfully');
-                } catch (error) {
-                    console.error('Failed to add queued ICE candidate:', error);
+            console.log("Processing queued ICE candidates:", iceCandidateQueue.length);
+            for (const queuedCandidate of iceCandidateQueue) {
+                if (queuedCandidate && queuedCandidate.candidate && queuedCandidate.sdpMid !== null && queuedCandidate.sdpMLineIndex !== null) {
+                    try {
+                        await pc.addIceCandidate(new RTCIceCandidate(queuedCandidate));
+                        console.log('Queued ICE Candidate added successfully:', queuedCandidate);
+                    } catch (error) {
+                        console.error('Failed to add queued ICE candidate:', error);
+                    }
+                } else {
+                    console.warn('Invalid queued ICE Candidate skipped:', queuedCandidate);
                 }
-            });
+            }
             setIceCandidateQueue([]); // Clear the queue after processing
         }
+        
     
         try {
             await pc.setRemoteDescription(new RTCSessionDescription(answer));
