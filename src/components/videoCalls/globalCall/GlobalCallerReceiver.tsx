@@ -100,14 +100,28 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         });
     
         peerConnectionRef.current = pc;
+        
+
     
         pc.onicecandidate = (event) => {
+
+
             if (event.candidate && connection) {
+
+                const candidateData = {
+                    candidate: event.candidate.candidate,
+                    sdpMid: event.candidate.sdpMid,
+                    sdpMLineIndex: event.candidate.sdpMLineIndex,
+                    usernameFragment: event.candidate.usernameFragment,
+                };
+    
+                console.log('Sending ICE Candidate:', candidateData);
+
                 signalRHandler.sendMessageThroughConnection(
                     connection,
                     'SendICECandidate',
                     callPartnerUsername,
-                    event.candidate
+                    candidateData
                 );
             } else if (!event.candidate) {
                 console.log("ICE Candidate gathering complete.");
