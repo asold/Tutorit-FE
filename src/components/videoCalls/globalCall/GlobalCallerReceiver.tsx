@@ -15,7 +15,8 @@ interface GlobalCallerReceiverProps {
 const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, callPartnerUsername }) => {
     // State Management
     const [connection, setConnection] = useState<HubConnection | null>(null);
-    const [peerConnection, setPeerConnection] = useState<RTCPeerConnection | null>(null);
+    // const [peerConnection, setPeerConnection] = useState<RTCPeerConnection | null>(null);
+    const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
     const [incomingOffer, setIncomingOffer] = useState<any | null>(null); // Store SDP offer
     const [isCalling, setIsCalling] = useState(false);
     const [isReceiving, setIsReceiving] = useState(false);
@@ -76,9 +77,9 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             if (connection) {
                 signalRHandler.stopConnection(connection);
             }
-            if (peerConnection) {
+            if (peerConnectionRef.current) {
                 console.log("Closing peerConnection");
-                peerConnection.close();
+                peerConnectionRef.current.close();
             }
         };
     }, [initializeSignalRConnection]);
@@ -88,7 +89,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         const pc = new RTCPeerConnection({
             iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
         });
-
+    
         pc.onicecandidate = (event) => {
             if (event.candidate && connection) {
                 console.log("Sending the ICE Candidate to the other peer:", event.candidate);
@@ -100,18 +101,19 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                 );
             }
         };
-
+    
         pc.ontrack = (event) => {
             console.log('Received remote track:', event.streams);
             if (remoteVideoRef.current && event.streams[0]) {
                 remoteVideoRef.current.srcObject = event.streams[0];
             }
         };
-        
-        // console.log("peerConnection", pc);
-        // setPeerConnection(pc);
+    
+        peerConnectionRef.current = pc; // Store in ref
+        console.log("WebRTC PeerConnection initialized:", pc);
         return pc;
     }, [connection, callPartnerUsername]);
+    
 
     // 🎥 **Start Local Video Stream**
     const startLocalStream = useCallback(async () => {
@@ -122,12 +124,12 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             }
 
             stream.getTracks().forEach((track) => {
-                peerConnection?.addTrack(track, stream);
+                peerConnectionRef.current?.addTrack(track, stream);
             });
         } catch (error) {
             console.error('Failed to start local stream:', error);
         }
-    }, [peerConnection]);
+    }, [peerConnectionRef.current]);
 
     // 📞 **Handle Call Start**
     const handleStartCall = useCallback(async () => {
@@ -136,8 +138,9 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             return;
         }
 
-        const pc = peerConnection ?? initializeWebRTCConnection();
-        setPeerConnection(pc);
+        let pc = peerConnectionRef.current ?? initializeWebRTCConnection();
+        // setPeerConnection(pc);
+        peerConnectionRef.current = pc;
         setIsCalling(true);
 
         try {
@@ -156,17 +159,15 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         } catch (error) {
             console.error('Failed to start call:', error);
         }
-    }, [
-        // peerConnection, 
-        callPartnerUsername, startLocalStream, initializeWebRTCConnection]);
+    }, [callPartnerUsername, startLocalStream, initializeWebRTCConnection]);
 
    // ✅ **Accept Offer**
     const handleAcceptOffer = useCallback(async () => {
-        let pc = peerConnection;
-        if (!peerConnection) {
+        let pc = peerConnectionRef.current;
+        if (!pc) {
             pc = initializeWebRTCConnection(); // Initialize if null
             console.log("peerconnection just initialised n accepting offer", pc);
-            setPeerConnection(pc);
+            peerConnectionRef.current = pc;
         }
 
         if (!incomingOffer?.offer) {
@@ -209,7 +210,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         } catch (error) {
             console.error('Failed to accept offer:', error);
         }
-    }, [peerConnection, connection, callerUsername, incomingOffer, startLocalStream, initializeWebRTCConnection]);
+    }, [connection, callerUsername, incomingOffer, startLocalStream, initializeWebRTCConnection]);
 
     
 
@@ -222,22 +223,23 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
         // Handle ICE Candidate
     const handleReceiveICECandidate = useCallback(async (candidate) => {
-        if (!peerConnection) {
+        const pc = peerConnectionRef.current;
+        if (!pc) {
             console.error('PeerConnection is not initialized for ICE candidate');
             return;
         };
         try {
-            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
             console.log('ICE Candidate added');
         } catch (error) {
             console.error('Failed to add ICE candidate:', error);
         }
-    }, [peerConnection]);
+    }, []);
 
     // Handle Stop Call
     const handleStopCall = useCallback(() => {
-        peerConnection?.close();
-        setPeerConnection(null);
+        peerConnectionRef.current?.close();
+        peerConnectionRef.current = null;
         setIsCalling(false);
         setIsReceiving(false);
 
@@ -250,22 +252,23 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         }
 
         console.log('Call stopped');
-    }, [peerConnection]);
+    }, []);
 
     // Handle SDP Answer from Receiving User
     const handleReceiveAnswer = useCallback(async (answer) => {
-        if (!peerConnection) {
+        const pc = peerConnectionRef.current;
+        if (!pc) {
             console.error('PeerConnection is not initialized');
             return;
         }
     
         try {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+            await pc.setRemoteDescription(new RTCSessionDescription(answer));
             console.log('SDP Answer successfully set as Remote Description');
         } catch (error) {
             console.error('Failed to set remote description with SDP Answer:', error);
         }
-    }, [peerConnection]);
+    }, []);
     
 
     return (
