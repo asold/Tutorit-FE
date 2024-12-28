@@ -112,7 +112,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                     sdpMLineIndex: event.candidate.sdpMLineIndex,
                     usernameFragment: event.candidate.usernameFragment,
                 };
-                console.log('Sending ICE Candidate:', candidateData.candidate);
+                console.log('Sending ICE Candidate:', candidateData.candidate, "to partner: ", callPartnerUsername);
 
                 signalRHandler.sendMessageThroughConnection(
                     connection,
@@ -273,6 +273,8 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     // Handle ICE Candidate
     const handleReceiveICECandidate = useCallback(async (candidate) => {
         const pc = peerConnectionRef.current;
+
+        console.log('Trying to receive  ICE Candidate:', candidate, "with peerconnection: ", pc);
     
         if (!pc) {
             console.warn('PeerConnection not ready, queuing ICE Candidate:', candidate);
