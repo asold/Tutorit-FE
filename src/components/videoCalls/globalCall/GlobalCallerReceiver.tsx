@@ -22,6 +22,8 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     const [isReceiving, setIsReceiving] = useState(false);
     const [showModal, setShowModal] = useState(false); // Modal for Accept/Decline Call
     const [callerUsername, setCallerUsername] = useState<string>('');
+    const [iceCandidateQueue, setIceCandidateQueue] = useState<any[]>([]);
+
 
     const handleCallAccepted = async () => setShowModal(false);
     const handleCallDeclined = () => setShowModal(false);
@@ -90,6 +92,8 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
         });
     
+        peerConnectionRef.current = pc;
+    
         pc.onicecandidate = (event) => {
             if (event.candidate && connection) {
                 console.log("Sending the ICE Candidate to the other peer:", event.candidate);
@@ -109,7 +113,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             }
         };
     
-        peerConnectionRef.current = pc; // Store in ref
         console.log("WebRTC PeerConnection initialized:", pc);
         return pc;
     }, [connection, callPartnerUsername]);
@@ -137,37 +140,37 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             console.error('SignalR connection is not established');
             return;
         }
-
+    
         let pc = peerConnectionRef.current ?? initializeWebRTCConnection();
-        // setPeerConnection(pc);
         peerConnectionRef.current = pc;
         setIsCalling(true);
-
+    
         try {
             await startLocalStream();
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-
+    
             await signalRHandler.sendMessageThroughConnection(
                 connection,
                 'SendOffer',
                 callPartnerUsername,
                 offer
             );
-
+    
             console.log('SDP Offer sent');
         } catch (error) {
             console.error('Failed to start call:', error);
         }
     }, [callPartnerUsername, startLocalStream, initializeWebRTCConnection]);
+    
 
    // ✅ **Accept Offer**
     const handleAcceptOffer = useCallback(async () => {
         let pc = peerConnectionRef.current;
         if (!pc) {
-            pc = initializeWebRTCConnection(); // Initialize if null
-            console.log("peerconnection just initialised n accepting offer", pc);
+            pc = initializeWebRTCConnection();
             peerConnectionRef.current = pc;
+            console.log("PeerConnection initialized during offer acceptance");
         }
 
         if (!incomingOffer?.offer) {
@@ -175,42 +178,47 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             return;
         }
 
-        console.log("peerConnection On Accepting Offer", pc);
-        console.log("incoming offer On Accepting Offer", incomingOffer);
-
         try {
             await startLocalStream();
 
-            console.log("SDP offer from Caller:", incomingOffer.offer); 
-            if(pc){
-                await pc.setRemoteDescription(new RTCSessionDescription(incomingOffer.offer));
+            console.log("SDP offer from Caller:", incomingOffer.offer);
+            await pc.setRemoteDescription(new RTCSessionDescription(incomingOffer.offer));
 
-                const answer = await pc.createAnswer();
-                await pc.setLocalDescription(answer);
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
 
-                console.log("SDP answer from Receiver:", answer);
+            console.log("SDP answer from Receiver:", answer);
 
-                if (connection) {
-                    await signalRHandler.sendMessageThroughConnection(
-                        connection,
-                        'SendAnswer',
-                        callerUsername,
-                        answer
-                    );
+            if (connection) {
+                await signalRHandler.sendMessageThroughConnection(
+                    connection,
+                    'SendAnswer',
+                    callerUsername,
+                    answer
+                );
+            }
+
+            // ✅ Process ICE Candidate Queue
+            if (iceCandidateQueue.length > 0) {
+                console.log("Processing queued ICE candidates:", iceCandidateQueue.length);
+                for (const queuedCandidate of iceCandidateQueue) {
+                    try {
+                        await pc.addIceCandidate(new RTCIceCandidate(queuedCandidate));
+                        console.log('Queued ICE Candidate added successfully');
+                    } catch (error) {
+                        console.error('Failed to add queued ICE candidate:', error);
+                    }
                 }
+                setIceCandidateQueue([]); // Clear the queue after processing
+            }
 
-                setIsReceiving(true);
-                setShowModal(false);
-                console.log('SDP Answer sent');
-            }
-            else{
-                console.log("peerConnection is null");
-            }
-            
+            setIsReceiving(true);
+            setShowModal(false);
+            console.log('SDP Answer sent and ICE candidates processed');
         } catch (error) {
             console.error('Failed to accept offer:', error);
         }
-    }, [connection, callerUsername, incomingOffer, startLocalStream, initializeWebRTCConnection]);
+    }, [connection, callerUsername, incomingOffer, startLocalStream, iceCandidateQueue]);
 
     
 
@@ -221,20 +229,30 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         console.log('Call declined by user');
     }, []);
 
-        // Handle ICE Candidate
+    // Handle ICE Candidate
     const handleReceiveICECandidate = useCallback(async (candidate) => {
         const pc = peerConnectionRef.current;
-        if (!pc) {
-            console.error('PeerConnection is not initialized for ICE candidate');
+    
+        // Validate candidate
+        if (!candidate || !candidate.candidate) {
+            console.warn('Received invalid ICE Candidate:', candidate);
             return;
-        };
+        }
+    
+        if (!pc) {
+            console.warn('PeerConnection not ready, queuing ICE Candidate:', candidate);
+            setIceCandidateQueue((prevQueue) => [...prevQueue, candidate]);
+            return;
+        }
+    
         try {
             await pc.addIceCandidate(new RTCIceCandidate(candidate));
-            console.log('ICE Candidate added');
+            console.log('ICE Candidate added successfully');
         } catch (error) {
             console.error('Failed to add ICE candidate:', error);
         }
     }, []);
+    
 
     // Handle Stop Call
     const handleStopCall = useCallback(() => {
