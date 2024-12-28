@@ -31,7 +31,7 @@ class SignalRHandler {
         if (connection && connection.state === 'Connected') {
             try {
                 await connection.send(connectionName, ...message);
-                console.log(`Message sent through connection: ${connectionName}`);
+                // console.log(`Message sent through connection: ${connectionName}`);
             } catch (error) {
                 console.error('Error sending message:', error);
                 throw error;

@@ -103,19 +103,16 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         });
         peerConnectionRef.current = pc;
     
+        // this is sending the ice candidate to the other user
         pc.onicecandidate = (event) => {
-
-
             if (event.candidate && connection) {
-
                 const candidateData = {
                     candidate: event.candidate.candidate,
                     sdpMid: event.candidate.sdpMid,
                     sdpMLineIndex: event.candidate.sdpMLineIndex,
                     usernameFragment: event.candidate.usernameFragment,
                 };
-    
-                console.log('Sending ICE Candidate:', candidateData);
+                console.log('Sending ICE Candidate:', candidateData.candidate);
 
                 signalRHandler.sendMessageThroughConnection(
                     connection,
@@ -168,11 +165,10 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             }
         };
         
-        
-
+    
         console.log("WebRTC PeerConnection initialized:", pc);
         return pc;
-    }, [connection, callPartnerUsername]);
+    }, [connection, callPartnerUsername, remoteVideoRef.current]);
     
 
     // 🎥 **Start Local Video Stream**
@@ -213,6 +209,10 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                 callPartnerUsername,
                 offer
             );
+
+            console.log('Offer sent :', offer );
+            console.log("with peerconnection: ", pc);
+
         } catch (error) {
             console.error('Failed to start call:', error);
         }
@@ -239,6 +239,8 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
+
+            console.log("Peerconnection in accept offer: ", pc , "eith answer: ", answer);  
 
             if (connection) {
                 await signalRHandler.sendMessageThroughConnection(
@@ -291,20 +293,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             console.error('Failed to add ICE candidate:', error, candidate);
         }
     }, []);
-    // const handleReceiveICECandidate = useCallback(async (candidate) => {
-    //     const pc = peerConnectionRef.current;
-    //     if (!pc) {
-    //         setIceCandidateQueue((prevQueue) => [...prevQueue, candidate]);
-    //         return;
-    //     }
-    
-    //     try {
-    //         await pc.addIceCandidate(new RTCIceCandidate(candidate));
-    //     } catch (error) {
-    //         console.error('Failed to add ICE candidate:', error);
-    //     }
-    // }, []);
-    
+
     
     // Handle Stop Call
     const handleStopCall = useCallback(() => {
@@ -334,7 +323,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     
         try {
             await pc.setRemoteDescription(new RTCSessionDescription(answer));
-            console.log('SDP Answer successfully set as Remote Description');
+            console.log('SDP Answer successfully set as Remote Description with pc:', pc, "and answer: ", answer);
     
             // Process queued ICE candidates after SDP setup
             if (iceCandidateQueue.length > 0) {
