@@ -77,6 +77,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                 signalRHandler.stopConnection(connection);
             }
             if (peerConnection) {
+                console.log("Closing peerConnection");
                 peerConnection.close();
             }
         };
@@ -155,50 +156,61 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         } catch (error) {
             console.error('Failed to start call:', error);
         }
-    }, [peerConnection, callPartnerUsername, startLocalStream, initializeWebRTCConnection]);
+    }, [
+        // peerConnection, 
+        callPartnerUsername, startLocalStream, initializeWebRTCConnection]);
 
-    // ✅ **Accept Offer**
+   // ✅ **Accept Offer**
     const handleAcceptOffer = useCallback(async () => {
-        console.log("peerConnection", peerConnection);
-        console.log("incomingOffer", incomingOffer);
-        if (!peerConnection){
-            const pc = initializeWebRTCConnection();
+        let pc = peerConnection;
+        if (!peerConnection) {
+            pc = initializeWebRTCConnection(); // Initialize if null
+            console.log("peerconnection just initialised n accepting offer", pc);
             setPeerConnection(pc);
         }
 
-        if (!incomingOffer?.offer) return;
-    
-        console.log("peerConnection On Accepting Offer", peerConnection);
-        console.log("incomming offer On Accepting Offer", incomingOffer);
+        if (!incomingOffer?.offer) {
+            console.error('No incoming offer available');
+            return;
+        }
+
+        console.log("peerConnection On Accepting Offer", pc);
+        console.log("incoming offer On Accepting Offer", incomingOffer);
 
         try {
             await startLocalStream();
 
             console.log("SDP offer from Caller:", incomingOffer.offer); 
+            if(pc){
+                await pc.setRemoteDescription(new RTCSessionDescription(incomingOffer.offer));
 
-            await peerConnection?.setRemoteDescription(new RTCSessionDescription(incomingOffer.offer));
-    
-            const answer = await peerConnection?.createAnswer();
-            await peerConnection?.setLocalDescription(answer);
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
 
-            console.log("SDP answer from Receiver:", answer);
+                console.log("SDP answer from Receiver:", answer);
 
-            if (connection) {
-                await signalRHandler.sendMessageThroughConnection(
-                    connection,
-                    'SendAnswer',
-                    callerUsername,
-                    answer
-                );
+                if (connection) {
+                    await signalRHandler.sendMessageThroughConnection(
+                        connection,
+                        'SendAnswer',
+                        callerUsername,
+                        answer
+                    );
+                }
+
+                setIsReceiving(true);
+                setShowModal(false);
+                console.log('SDP Answer sent');
             }
-    
-            setIsReceiving(true);
-            setShowModal(false);
-            console.log('SDP Answer sent');
+            else{
+                console.log("peerConnection is null");
+            }
+            
         } catch (error) {
             console.error('Failed to accept offer:', error);
         }
-    }, [peerConnection, connection, callPartnerUsername, incomingOffer, startLocalStream]);
+    }, [peerConnection, connection, callerUsername, incomingOffer, startLocalStream, initializeWebRTCConnection]);
+
     
 
     // ❌ **Decline Offer**
@@ -210,7 +222,10 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
         // Handle ICE Candidate
     const handleReceiveICECandidate = useCallback(async (candidate) => {
-        if (!peerConnection) return;
+        if (!peerConnection) {
+            console.error('PeerConnection is not initialized for ICE candidate');
+            return;
+        };
         try {
             await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
             console.log('ICE Candidate added');
