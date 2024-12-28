@@ -156,6 +156,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             switch (pc.iceConnectionState) {
                 case 'connected':
                 case 'completed':
+                    console.log('ICE Connection established');
                     break;
                 case 'failed':
                 case 'disconnected':
@@ -268,26 +269,39 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     }, []);
 
     // Handle ICE Candidate
+    // const handleReceiveICECandidate = useCallback(async (candidate) => {
+    //     const pc = peerConnectionRef.current;
+    
+    //     if (!pc) {
+    //         console.warn('PeerConnection not ready, queuing ICE Candidate:', candidate);
+    //         setIceCandidateQueue((prevQueue) => [...prevQueue, candidate]);
+    //         return;
+    //     }
+    
+    //     // Validate candidate
+    //     if (!candidate || !candidate.candidate || candidate.sdpMid === null || candidate.sdpMLineIndex === null) {
+    //         console.warn('Received invalid ICE Candidate:', candidate);
+    //         return; // Skip invalid candidates
+    //     }
+    
+    //     try {
+    //         await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    //         console.log('ICE Candidate added successfully:', candidate);
+    //     } catch (error) {
+    //         console.error('Failed to add ICE candidate:', error, candidate);
+    //     }
+    // }, []);
     const handleReceiveICECandidate = useCallback(async (candidate) => {
         const pc = peerConnectionRef.current;
-    
         if (!pc) {
-            console.warn('PeerConnection not ready, queuing ICE Candidate:', candidate);
             setIceCandidateQueue((prevQueue) => [...prevQueue, candidate]);
             return;
         }
     
-        // Validate candidate
-        if (!candidate || !candidate.candidate || candidate.sdpMid === null || candidate.sdpMLineIndex === null) {
-            console.warn('Received invalid ICE Candidate:', candidate);
-            return; // Skip invalid candidates
-        }
-    
         try {
             await pc.addIceCandidate(new RTCIceCandidate(candidate));
-            console.log('ICE Candidate added successfully:', candidate);
         } catch (error) {
-            console.error('Failed to add ICE candidate:', error, candidate);
+            console.error('Failed to add ICE candidate:', error);
         }
     }, []);
     
@@ -344,22 +358,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         }
     }, [iceCandidateQueue]);
     
-    // const handleReceiveAnswer = useCallback(async (answer) => {
-    //     const pc = peerConnectionRef.current;
-    //     if (!pc) {
-    //         return;
-    //     }
-
-    //     // ✅ Process ICE Candidate Queue After SDP Answer
-    //     await processIceCandidateQueue();
-
-    //     try {
-    //         await pc.setRemoteDescription(new RTCSessionDescription(answer));
-    //     } catch (error) {
-    //         console.error('Failed to set remote description with SDP Answer:', error);
-    //     }
-    // }, []);
-
     const processIceCandidateQueue = useCallback(async () => {
         const pc = peerConnectionRef.current;
         if (!pc) return;
