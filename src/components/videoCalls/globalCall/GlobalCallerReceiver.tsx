@@ -25,6 +25,9 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     const [callerUsername, setCallerUsername] = useState<string>('');
     const [iceCandidateQueue, setIceCandidateQueue] = useState<any[]>([]);
     const [callStopped, setCallStopped] = useState(false);
+    
+    //testing errors with media
+    const [mediaError, setMediaError] = useState<string | null>(null);
 
     // Video Refs
     const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -209,20 +212,66 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     }, [callStopped]);
 
     // 🎥 **Start Local Video Stream**
-    const startLocalStream = useCallback(async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            if (localVideoRef.current) {
-                localVideoRef.current.srcObject = stream;
-            }
+    // const startLocalStream = useCallback(async () => {
+    //     try {
+    //         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    //         if (localVideoRef.current) {
+    //             localVideoRef.current.srcObject = stream;
+    //         }
 
-            stream.getTracks().forEach((track) => {
-                peerConnectionRef.current?.addTrack(track, stream);
+    //         stream.getTracks().forEach((track) => {
+    //             peerConnectionRef.current?.addTrack(track, stream);
+    //         });
+    //     } catch (error) {
+    //         console.error('Failed to start local stream:', error);
+    //     }
+    // }, [peerConnectionRef.current]);
+    const startLocalStream = useCallback(async () => {
+        let audioAccess = true;
+        let videoAccess = true;
+    
+        try {
+            // Check for Video and Audio access individually
+            const videoStream = await navigator.mediaDevices.getUserMedia({ video: true }).catch((error) => {
+                console.error('Video access denied:', error);
+                videoAccess = false;
             });
+    
+            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch((error) => {
+                console.error('Audio access denied:', error);
+                audioAccess = false;
+            });
+    
+            // Combine Streams if both exist
+            if (audioAccess && videoAccess) {
+                const combinedStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                if (localVideoRef.current) {
+                    localVideoRef.current.srcObject = combinedStream;
+                }
+    
+                combinedStream.getTracks().forEach((track) => {
+                    peerConnectionRef.current?.addTrack(track, combinedStream);
+                });
+            } else {
+                // Handle specific errors
+                let errorMessage = 'Failed to access: ';
+                if (!audioAccess && !videoAccess) {
+                    errorMessage += 'Microphone and Camera.';
+                } else if (!audioAccess) {
+                    errorMessage += 'Microphone.';
+                } else if (!videoAccess) {
+                    errorMessage += 'Camera.';
+                }
+    
+                setMediaError(errorMessage);
+                console.warn(errorMessage);
+            }
         } catch (error) {
-            console.error('Failed to start local stream:', error);
+            console.error('Unexpected error while starting local stream:', error);
+            setMediaError('Unexpected error accessing media devices.');
         }
     }, [peerConnectionRef.current]);
+
 
     // 📞 **Handle Call Start**
     const handleStartCall = useCallback(async () => {
@@ -497,8 +546,27 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                     <Button variant="contained" color="error" onClick={handleDeclineOffer}>Decline</Button>
                 </Box>
             </Modal>
+            {mediaError && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: '10%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        backgroundColor: '#ff4d4f',
+                        color: 'white',
+                        padding: '16px',
+                        borderRadius: '8px',
+                        zIndex: 1000,
+                    }}
+                >
+                    <strong>⚠️ Media Access Error:</strong>
+                    <p>{mediaError}</p>
+                </div>
+            )}
 
         </Box>
+        
     );
 };
 
@@ -513,4 +581,6 @@ const modalStyle = {
     borderRadius: '8px',
     textAlign: 'center',
 };
+
+
 export default GlobalCallerReceiver;
