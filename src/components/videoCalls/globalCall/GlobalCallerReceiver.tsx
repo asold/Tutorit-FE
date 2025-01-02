@@ -26,10 +26,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     const [iceCandidateQueue, setIceCandidateQueue] = useState<any[]>([]);
     const [callStopped, setCallStopped] = useState(false);
 
-
-    // const handleCallAccepted = async () => setShowModal(false);
-    // const handleCallDeclined = () => setShowModal(false);
-
     // Video Refs
     const localVideoRef = useRef<HTMLVideoElement>(null);
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -83,7 +79,9 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                 });
                 //Handling ending the call from other clients
                 signalRHandler.onConnectionEvent(connect, 'endCall', async () => {
-                    refreshComponent();
+                    // refreshComponent();
+                    console.log("Received endCall event from SignalR");
+                    setCallStopped(true);
                 });
 
             } catch (error) {
@@ -103,8 +101,34 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                 peerConnectionRef.current.close();
             }
         };
-    }, [initializeSignalRConnection, callStopped]);
+    }, [initializeSignalRConnection]);
 
+    useEffect(() => {
+        if (callStopped) {
+            console.log("Refreshing component after callStopped");
+    
+            // Clean local states
+            setIsCalling(false);
+            setIsReceiving(false);
+            setIncomingOffer(null);
+            setRemoteStream(null);
+    
+            // Reset media tracks
+            if (localVideoRef.current?.srcObject) {
+                (localVideoRef.current.srcObject as MediaStream).getTracks().forEach((track) => track.stop());
+            }
+            if (remoteVideoRef.current?.srcObject) {
+                (remoteVideoRef.current.srcObject as MediaStream).getTracks().forEach((track) => track.stop());
+            }
+    
+            // Clean up peer connection
+            peerConnectionRef.current?.close();
+            peerConnectionRef.current = null;
+    
+            setCallStopped(false); // Reset after handling
+        }
+    }, [callStopped]);
+    
     // 🎥 **Initialize WebRTC Connection**
     const initializeWebRTCConnection = useCallback(() => {
         const pc = new RTCPeerConnection({
@@ -130,8 +154,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                     return;
                 }
 
-                console.log('Sending ICE Candidate:', candidateData.candidate, "to partner: ", callerUsername);
-
                 signalRHandler.sendMessageThroughConnection(
                     connection,
                     'SendICECandidate',
@@ -139,25 +161,21 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                     candidateData
                 );
             } else if (!event.candidate) {
-                console.log("ICE Candidate gathering complete.");
             }
         };
         
         pc.ontrack = (event) => {
-            console.log('Received remote track:', event.streams);
             
             if (remoteVideoRef.current) {
                 // Ensure the remote video stream is set once
                 if (!remoteVideoRef.current.srcObject) {
                     remoteVideoRef.current.srcObject = event.streams[0];
-                    console.log('Remote video stream set successfully');
                 } else {
                     // Add new tracks if they aren't already in the stream
                     const remoteStream = remoteVideoRef.current.srcObject as MediaStream;
                     event.streams[0].getTracks().forEach(track => {
                         if (!remoteStream.getTracks().includes(track)) {
                             remoteStream.addTrack(track);
-                            console.log('Added new track to remote stream');
                         }
                     });
                 }
@@ -171,7 +189,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             switch (pc.iceConnectionState) {
                 case 'connected':
                 case 'completed':
-                    console.log('ICE Connection established');
                     break;
                 case 'failed':
                 case 'disconnected':
@@ -179,31 +196,17 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                     console.warn('ICE Connection failed, disconnected, or closed');
                     break;
                 default:
-                    console.log('ICE Connection state:', pc.iceConnectionState);
             }
         };
-        
-    
-        console.log("WebRTC PeerConnection initialized:", pc);
+            
         return pc;
     }, [connection, callPartnerUsername, remoteVideoRef.current]);
     
     // 🔄 **Refresh Component**
     const refreshComponent = useCallback(() => {
         console.log("Refreshing the component after callEnd message!!")
-
-        // setIncomingOffer(null);
-        // setIsCalling(false);
-        // setIsReceiving(false);
-        // setShowModal(false);
-        // setCallerUsername('');
-        // setIceCandidateQueue([]);
-        // if (remoteVideoRef.current?.srcObject) {
-        //     (remoteVideoRef.current.srcObject as MediaStream).getTracks().forEach((track) => track.stop());
-        // }
-
         setCallStopped(true);
-    }, []);
+    }, [callStopped]);
 
     // 🎥 **Start Local Video Stream**
     const startLocalStream = useCallback(async () => {
@@ -244,9 +247,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                 offer
             );
 
-            console.log('Offer sent :', offer );
-            console.log("with peerconnection: ", pc);
-
         } catch (error) {
             console.error('Failed to start call:', error);
         }
@@ -273,8 +273,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
-
-            console.log("Peerconnection in accept offer: ", pc , "with answer: ", answer);  
 
             if (connection) {
                 await signalRHandler.sendMessageThroughConnection(
@@ -308,8 +306,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     const handleReceiveICECandidate = useCallback(async (candidate) => {
         const pc = peerConnectionRef.current;
 
-        console.log('Trying to receive  ICE Candidate:', candidate, "with peerconnection: ", pc);
-    
         if (!pc) {
             console.warn('PeerConnection not ready, queuing ICE Candidate:', candidate);
             setIceCandidateQueue((prevQueue) => [...prevQueue, candidate]);
@@ -324,7 +320,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     
         try {
             await pc.addIceCandidate(new RTCIceCandidate(candidate));
-            console.log('ICE Candidate added successfully:', candidate);
         } catch (error) {
             console.error('Failed to add ICE candidate:', error, candidate);
         }
@@ -332,43 +327,74 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
     
     // Handle Stop Call
-    const handleStopCall = useCallback(() => {
+    // const handleStopCall = useCallback(() => {
 
-        //send message via web socket to the other caller to stop the call and re-render the component (different method)
-        if(connectionref.current){
-            console.log("Ending the call!!")
+    //     //send message via web socket to the other caller to stop the call and re-render the component (different method)
+    //     if(connectionref.current){
+    //         console.log("Ending the call!!")
+    //         signalRHandler.sendMessageThroughConnection(
+    //             connectionref.current,
+    //             'EndCallForAllParticipants',
+    //             "EndCall",
+    //         );
+    //     }
+    //     else{
+    //         console.error('SignalR connection is not established');
+    //     }
+
+    //     peerConnectionRef.current?.close();
+    //     peerConnectionRef.current = null;
+    //     setIsCalling(false);
+    //     setIsReceiving(false);
+
+    //     if (localVideoRef.current?.srcObject) {
+    //         (localVideoRef.current.srcObject as MediaStream).getTracks().forEach((track) => track.stop());
+    //     }
+
+    //     if (remoteVideoRef.current?.srcObject) {
+    //         (remoteVideoRef.current.srcObject as MediaStream).getTracks().forEach((track) => track.stop());
+    //     }
+
+    //     // refreshComponent();
+    //     setCallStopped(true);
+    //     // re-render the component (silently) (different method) -- maybe just have a prop followed in the useEffect
+    //     // on messsage received from socket, update the prop, and then re-render the component
+
+    //     console.log('Call stopped');
+    // }, [callStopped]);
+    const handleStopCall = useCallback(() => {
+        if (!peerConnectionRef.current) {
+            console.warn("Call is already stopped.");
+            return;
+        }
+    
+        console.log("Ending the call...");
+    
+        if (connectionref.current) {
             signalRHandler.sendMessageThroughConnection(
                 connectionref.current,
                 'EndCallForAllParticipants',
                 "EndCall",
             );
-        }
-        else{
+        } else {
             console.error('SignalR connection is not established');
         }
-
+    
         peerConnectionRef.current?.close();
         peerConnectionRef.current = null;
+    
         setIsCalling(false);
         setIsReceiving(false);
-
+        setCallStopped(true);
+    
         if (localVideoRef.current?.srcObject) {
             (localVideoRef.current.srcObject as MediaStream).getTracks().forEach((track) => track.stop());
         }
-
         if (remoteVideoRef.current?.srcObject) {
             (remoteVideoRef.current.srcObject as MediaStream).getTracks().forEach((track) => track.stop());
         }
-
-        // refreshComponent();
-        setCallStopped(true);
-        // re-render the component (silently) (different method) -- maybe just have a prop followed in the useEffect
-        // on messsage received from socket, update the prop, and then re-render the component
-
-
-        console.log('Call stopped');
     }, []);
-
+    
     // Handle SDP Answer from Receiving User
     const handleReceiveAnswer = useCallback(async (answer) => {
         const pc = peerConnectionRef.current;
