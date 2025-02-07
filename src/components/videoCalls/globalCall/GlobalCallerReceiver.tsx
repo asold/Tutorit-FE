@@ -329,7 +329,9 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         } catch (error) {
             console.error('Failed to accept offer:', error);
         }
-    }, [connection, callerUsername, incomingOffer, startLocalStream, iceCandidateQueue]);
+    }, [connection, incomingOffer, startLocalStream, iceCandidateQueue
+        // ,callerUsername
+    ]);
 
     
 
