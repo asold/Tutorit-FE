@@ -150,7 +150,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                 };
                 
                 // Resolve partner username correctly
-                const targetUsername = callPartnerUsername || callerUsername || "";
+                const targetUsername = callPartnerUsername || callerUsername;
 
                 console.log("CallPartnerUsername: the one from the caller", callPartnerUsername);
                 console.log("CallerUsername: the one from the receiver", callerUsername);
@@ -160,6 +160,8 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                     return;
                 }
 
+                console.log("Sending ICE candidate to:", targetUsername);
+
                 signalRHandler.sendMessageThroughConnection(
                     connection,
                     'SendICECandidate',
@@ -167,6 +169,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                     candidateData
                 );
             } else if (!event.candidate) {
+                console.log('All ICE candidates have been sent.');
             }
         };
         
@@ -308,6 +311,10 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
             await pc.setRemoteDescription(new RTCSessionDescription(incomingOffer.offer));
 
+            if(incomingOffer.senderUsername){
+                setCallerUsername(incomingOffer.senderUsername);
+            }
+
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
 
@@ -329,9 +336,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         } catch (error) {
             console.error('Failed to accept offer:', error);
         }
-    }, [connection, incomingOffer, startLocalStream, iceCandidateQueue
-        // ,callerUsername
-    ]);
+    }, [connection, incomingOffer, startLocalStream, iceCandidateQueue]);
 
     
 
@@ -356,13 +361,19 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             console.warn('Received invalid ICE Candidate:', candidate);
             return; // Skip invalid candidates
         }
-    
+        
+        if (!callerUsername && !callPartnerUsername) {
+            console.warn('Username not set, queuing ICE Candidate:', candidate);
+            setIceCandidateQueue((prevQueue) => [...prevQueue, candidate]);
+            return;
+        }
+
         try {
             await pc.addIceCandidate(new RTCIceCandidate(candidate));
         } catch (error) {
             console.error('Failed to add ICE candidate:', error, candidate);
         }
-    }, []);
+    }, [callPartnerUsername, callerUsername]);
 
     const handleStopCall = useCallback(() => {
         if (!peerConnectionRef.current) {
