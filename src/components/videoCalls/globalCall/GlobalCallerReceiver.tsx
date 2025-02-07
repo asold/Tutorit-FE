@@ -66,7 +66,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
                 // Handle Incoming WebRTC Offer
                 signalRHandler.onConnectionEvent(connect, 'receiveOffer', async (offer, senderUsername) => {
-                    console.log("Received offer from: ", senderUsername);
                     setIncomingOffer({ offer, senderUsername }); // Store both offer and senderUsername
                     setShowModal(true); // Show modal for user acceptance
                     setCallerUsername(senderUsername);
@@ -152,6 +151,9 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                 
                 // Resolve partner username correctly
                 const targetUsername = callPartnerUsername || callerUsername || "";
+
+                console.log("CallPartnerUsername: the one from the caller", callPartnerUsername);
+                console.log("CallerUsername: the one from the receiver", callerUsername);
 
                 if (!targetUsername) {
                     console.error('No valid callPartnerUsername or senderUsername found. ICE Candidate cannot be sent.');
