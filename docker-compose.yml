@@ -7,7 +7,7 @@ services:
     networks:
       - tutorit-net
     depends_on:
-      - server
+      - tutorit-server
     ports:
       - "3000:80"
 
