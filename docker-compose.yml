@@ -6,8 +6,6 @@ services:
       REACT_APP_SERVER_ADDRESS: "https://mesharaserver.win"
     networks:
       - tutorit-net
-    depends_on:
-      tutorit_server:
     ports:
       - "3000:80"
 
