@@ -27,8 +27,13 @@ const LanguageSwitcher: React.FC = () => {
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('userId');
     if (token && userId) {
-      // Dispatch loginUser action to restore login state in Redux
-      dispatch(loginUser(token, userId));
+      if(!isLoggedIn){
+        // Dispatch loginUser action to restore login state in Redux
+        dispatch(loginUser(token, userId));
+      }
+    }
+    else if(!isLoggedIn){
+      handleLogout();
     }
   }, [i18n.language, dispatch]);
 
@@ -38,16 +43,15 @@ const LanguageSwitcher: React.FC = () => {
   };
 
   const handleLogout = () => {
-    // Remove token and userId from localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
-    dispatch(logoutUser()); // Dispatch logout to update Redux state
-    navigate('/login'); // Redirect to login page after logout
+    dispatch(logoutUser());
+    navigate('/login'); 
+    console.log("Logged out")
   };
 
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2 }}>
-    {/* Left-aligned VideoCallIcon */}
     <Box sx={{  }}>
       {isLoggedIn && (
         <IconButton

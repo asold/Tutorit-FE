@@ -42,23 +42,22 @@ const StudentListOfCourses: React.FC = () => {
   const appliedCourses = useSelector((state: any) => state.courseList as CourseAppliedStatus[]);
   const dispatch: ThunkDispatch<any, any, AnyAction> = useDispatch();
   let token = useSelector((state: any) => state.auth.token);
-  const language = useSelector((state: any) => state.globalLanguage.language);
+  // const language = useSelector((state: any) => state.globalLanguage.language);
+  const [filterLanguage, setFilterLanguage] = useState<string>(''); // Local state for the input
 
   const fetchCourses = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${SERVER_ADDRESS}/tutorit/Course/guest_courses?language=${language}`);
+      const response = await fetch(`${SERVER_ADDRESS}/tutorit/Course/guest_courses?language=${filterLanguage}`);
       if (!response.ok) {
         throw new Error('Failed to fetch courses');
       }
       const data = await response.json();
       setCourses(data);
 
-      // Fetch application statuses once courses are loaded
       await fetchApplicationStatuses(data);
     } catch (error: any) {
       fetchCourses();
-      // setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -66,7 +65,6 @@ const StudentListOfCourses: React.FC = () => {
 
   const fetchApplicationStatuses = async (courses: Course[]) => {
     token = localStorage.getItem('token');
-    const encodedToken = encodeURIComponent(token);
 
     for (const course of courses) {
       try {
@@ -93,10 +91,10 @@ const StudentListOfCourses: React.FC = () => {
 
   useEffect(() => {
     fetchCourses();
-  }, [language]);
+  }, [filterLanguage]);
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    i18n.changeLanguage(e.target.value);
+    setFilterLanguage(e.target.value);
   };
 
   const handleApply = (courseId: string) => {
@@ -115,7 +113,7 @@ const StudentListOfCourses: React.FC = () => {
         <TextField
           label={t('Language')}
           variant="outlined"
-          value={language}
+          value={filterLanguage}
           onChange={handleLanguageChange}
           sx={{ marginBottom: '20px' }}
         />

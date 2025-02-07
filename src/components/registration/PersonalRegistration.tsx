@@ -121,50 +121,51 @@ const PersonalRegistration: React.FC = () => {
               <Grid item>
                 <Avatar
                   onClick={() => handleAvatarSelect('/icons/astronaut.png')}
-                  src={photoUrl === '/icons/astronaut.png' ? photoUrl : undefined}
+                  src={'/icons/astronaut.png'}
                   sx={{
-                    width: 56, 
-                    height: 56, 
-                    cursor: 'pointer', 
+                    width: 56,
+                    height: 56,
+                    cursor: 'pointer',
                     backgroundColor: photoUrl === '/icons/astronaut.png' ? '#6db5a0' : '#f5f5f5',
-                    color: photoUrl === '/icons/astronaut.png' ? '#ffffff' : undefined
+                    color: photoUrl === '/icons/astronaut.png' ? '#ffffff' : '#333',
                   }}
                 >
-                  <AccountCircleIcon />
+                  {!photoUrl || photoUrl !== '/icons/astronaut.png' ? <AccountCircleIcon /> : null}
                 </Avatar>
               </Grid>
               <Grid item>
                 <Avatar
                   onClick={() => handleAvatarSelect('/icons/teenager.png')}
-                  src={photoUrl === '/icons/teenager.png' ? photoUrl : undefined}
+                  src={'./icons/teenager.png'}
                   sx={{
-                    width: 56, 
-                    height: 56, 
-                    cursor: 'pointer', 
+                    width: 56,
+                    height: 56,
+                    cursor: 'pointer',
                     backgroundColor: photoUrl === '/icons/teenager.png' ? '#6db5a0' : '#f5f5f5',
-                    color: photoUrl === '/icons/teenager.png' ? '#ffffff' : undefined
+                    color: photoUrl === '/icons/teenager.png' ? '#ffffff' : '#333',
                   }}
                 >
-                  <FaceIcon />
+                  {!photoUrl || photoUrl !== '/icons/teenager.png' ? <FaceIcon /> : null}
                 </Avatar>
               </Grid>
               <Grid item>
                 <Avatar
                   onClick={() => handleAvatarSelect('/icons/unicorn.png')}
-                  src={photoUrl === '/icons/unicorn.png' ? photoUrl : undefined}
+                  src={'/icons/unicorn.png'}
                   sx={{
-                    width: 56, 
-                    height: 56, 
-                    cursor: 'pointer', 
+                    width: 56,
+                    height: 56,
+                    cursor: 'pointer',
                     backgroundColor: photoUrl === '/icons/unicorn.png' ? '#6db5a0' : '#f5f5f5',
-                    color: photoUrl === '/icons/unicorn.png' ? '#ffffff' : undefined
+                    color: photoUrl === '/icons/unicorn.png' ? '#ffffff' : '#333',
                   }}
                 >
-                  <PersonIcon />
+                  {!photoUrl || photoUrl !== '/icons/unicorn.png' ? <PersonIcon /> : null}
                 </Avatar>
               </Grid>
             </Grid>
           </Box>
+
           {isFormComplete && (
             <Button
               variant="contained"
