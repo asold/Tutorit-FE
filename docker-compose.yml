@@ -1,23 +1,14 @@
 services:
-
-  tutorit_server:
-    image: tutorit-server-server
-    container_name: tutorit_server
-    restart: unless-stopped
-    ports:
-      - "9000:80"
-    networks:
-      - tutorit-net
-
   client:
     build: .
     container_name: tutorit_client
     environment:
-      REACT_APP_SERVER_ADDRESS: "'https://mesharaserver.win'"
+      REACT_APP_SERVER_ADDRESS: "https://mesharaserver.win"
     networks:
       - tutorit-net
     depends_on:
-      - tutorit_server
+      tutorit_server:
+        condition: service_started
     ports:
       - "3000:80"
 
