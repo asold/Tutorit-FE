@@ -5,7 +5,7 @@ services:
     environment:
       REACT_APP_SERVER_ADDRESS: "http://tutorit_server:9000"
     networks:
-      - tutorit_tutorit-net
+      - tutorit-net
     depends_on:
       - server
     ports:
