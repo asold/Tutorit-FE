@@ -66,6 +66,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
                 // Handle Incoming WebRTC Offer
                 signalRHandler.onConnectionEvent(connect, 'receiveOffer', async (offer, senderUsername) => {
+                    console.log("Received offer from: ", senderUsername);
                     setIncomingOffer({ offer, senderUsername }); // Store both offer and senderUsername
                     setShowModal(true); // Show modal for user acceptance
                     setCallerUsername(senderUsername);
@@ -211,21 +212,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         setCallStopped(true);
     }, [callStopped]);
 
-    // 🎥 **Start Local Video Stream**
-    // const startLocalStream = useCallback(async () => {
-    //     try {
-    //         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    //         if (localVideoRef.current) {
-    //             localVideoRef.current.srcObject = stream;
-    //         }
-
-    //         stream.getTracks().forEach((track) => {
-    //             peerConnectionRef.current?.addTrack(track, stream);
-    //         });
-    //     } catch (error) {
-    //         console.error('Failed to start local stream:', error);
-    //     }
-    // }, [peerConnectionRef.current]);
     const startLocalStream = useCallback(async () => {
         let audioAccess = true;
         let videoAccess = true;
@@ -374,43 +360,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         }
     }, []);
 
-    
-    // Handle Stop Call
-    // const handleStopCall = useCallback(() => {
-
-    //     //send message via web socket to the other caller to stop the call and re-render the component (different method)
-    //     if(connectionref.current){
-    //         console.log("Ending the call!!")
-    //         signalRHandler.sendMessageThroughConnection(
-    //             connectionref.current,
-    //             'EndCallForAllParticipants',
-    //             "EndCall",
-    //         );
-    //     }
-    //     else{
-    //         console.error('SignalR connection is not established');
-    //     }
-
-    //     peerConnectionRef.current?.close();
-    //     peerConnectionRef.current = null;
-    //     setIsCalling(false);
-    //     setIsReceiving(false);
-
-    //     if (localVideoRef.current?.srcObject) {
-    //         (localVideoRef.current.srcObject as MediaStream).getTracks().forEach((track) => track.stop());
-    //     }
-
-    //     if (remoteVideoRef.current?.srcObject) {
-    //         (remoteVideoRef.current.srcObject as MediaStream).getTracks().forEach((track) => track.stop());
-    //     }
-
-    //     // refreshComponent();
-    //     setCallStopped(true);
-    //     // re-render the component (silently) (different method) -- maybe just have a prop followed in the useEffect
-    //     // on messsage received from socket, update the prop, and then re-render the component
-
-    //     console.log('Call stopped');
-    // }, [callStopped]);
     const handleStopCall = useCallback(() => {
         if (!peerConnectionRef.current) {
             console.warn("Call is already stopped.");

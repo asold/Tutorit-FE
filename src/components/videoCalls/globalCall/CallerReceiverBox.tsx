@@ -4,8 +4,6 @@ import Draggable from 'react-draggable';
 import CloseIcon from '@mui/icons-material/Close';
 import MinimizeIcon from '@mui/icons-material/Minimize';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
-import GlobalCaller from './GlobalCaller.tsx';
-import GlobalReceiver from './GlobalReceiver.tsx';
 import UserStatusDropdown from '../../users/UserStatusDropdown.tsx';
 import { useDispatch, useSelector } from 'react-redux';
 import IncommingCallHandler from './IncommingCallHandler.tsx';
