@@ -138,6 +138,11 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
         });
         peerConnectionRef.current = pc;
+
+        // Log ICE connection state changes
+        pc.oniceconnectionstatechange = () => {
+            console.log(`ICE Connection State: ${pc.iceConnectionState}`);
+        };
     
         // this is sending the ice candidate to the other user
         pc.onicecandidate = (event) => {
@@ -171,6 +176,8 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         };
         
         pc.ontrack = (event) => {
+
+            console.log("🎥 Received track:", event.track.kind, event.streams[0]);
             
             if (remoteVideoRef.current) {
                 // Ensure the remote video stream is set once
@@ -186,7 +193,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                     });
                 }
             } else {
-                console.warn('Remote video ref is null, cannot set remote stream');
+                console.warn("⚠️ Remote video ref is null, cannot set stream");
             }
         };
         
@@ -208,78 +215,106 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         return pc;
     }, [connection, callPartnerUsername, remoteVideoRef.current]);
     
+    // const startLocalStream = useCallback(async () => {
+    //     let audioAccess = true;
+    //     let videoAccess = true;
+    
+    //     try {
+    //         // Check for Video and Audio access individually
+    //         const videoStream = await navigator.mediaDevices.getUserMedia({ video: true }).catch((error) => {
+    //             console.error('Video access denied:', error);
+    //             videoAccess = false;
+    //         });
+    
+    //         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch((error) => {
+    //             console.error('Audio access denied:', error);
+    //             audioAccess = false;
+    //         });
+    
+    //         // Combine Streams if both exist
+    //         if (audioAccess && videoAccess) {
+    //             const combinedStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    //             if (localVideoRef.current) {
+    //                 localVideoRef.current.srcObject = combinedStream;
+    //             }
+    
+    //             combinedStream.getTracks().forEach((track) => {
+    //                 peerConnectionRef.current?.addTrack(track, combinedStream);
+    //             });
+    //         } else {
+    //             // Handle specific errors
+    //             let errorMessage = 'Failed to access: ';
+    //             if (!audioAccess && !videoAccess) {
+    //                 errorMessage += 'Microphone and Camera.';
+    //             } else if (!audioAccess) {
+    //                 errorMessage += 'Microphone.';
+    //             } else if (!videoAccess) {
+    //                 errorMessage += 'Camera.';
+    //             }
+    
+    //             setMediaError(errorMessage);
+    //             console.warn(errorMessage);
+    //         }
+    //     } catch (error) {
+    //         console.error('Unexpected error while starting local stream:', error);
+    //         setMediaError('Unexpected error accessing media devices.');
+    //     }
+    // }, [peerConnectionRef.current]);
     const startLocalStream = useCallback(async () => {
-        let audioAccess = true;
-        let videoAccess = true;
-    
         try {
-            // Check for Video and Audio access individually
-            const videoStream = await navigator.mediaDevices.getUserMedia({ video: true }).catch((error) => {
-                console.error('Video access denied:', error);
-                videoAccess = false;
-            });
+            // Request media stream
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     
-            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch((error) => {
-                console.error('Audio access denied:', error);
-                audioAccess = false;
-            });
+            console.log("✅ Local stream obtained:", stream);
     
-            // Combine Streams if both exist
-            if (audioAccess && videoAccess) {
-                const combinedStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                if (localVideoRef.current) {
-                    localVideoRef.current.srcObject = combinedStream;
-                }
-    
-                combinedStream.getTracks().forEach((track) => {
-                    peerConnectionRef.current?.addTrack(track, combinedStream);
-                });
+            // Set local video
+            if (localVideoRef.current) {
+                localVideoRef.current.srcObject = stream;
             } else {
-                // Handle specific errors
-                let errorMessage = 'Failed to access: ';
-                if (!audioAccess && !videoAccess) {
-                    errorMessage += 'Microphone and Camera.';
-                } else if (!audioAccess) {
-                    errorMessage += 'Microphone.';
-                } else if (!videoAccess) {
-                    errorMessage += 'Camera.';
-                }
-    
-                setMediaError(errorMessage);
-                console.warn(errorMessage);
+                console.warn("⚠️ Local video ref is null");
             }
+    
+            // Attach tracks to PeerConnection
+            stream.getTracks().forEach(track => {
+                peerConnectionRef.current?.addTrack(track, stream);
+            });
+    
         } catch (error) {
-            console.error('Unexpected error while starting local stream:', error);
-            setMediaError('Unexpected error accessing media devices.');
+            console.error('❌ Error accessing media devices:', error);
+            setMediaError('Please grant camera and microphone access for the call to work.');
         }
-    }, [peerConnectionRef.current]);
-
+    }, []);
+    
 
     // 📞 **Handle Call Start**
     const handleStartCall = useCallback(async () => {
         if (!connection) {
-            console.error('SignalR connection is not established');
+            console.error('❌ SignalR connection is not established');
             return;
         }
     
-        let pc = peerConnectionRef.current ?? initializeWebRTCConnection();
-        peerConnectionRef.current = pc;
-        setIsCalling(true);
-    
         try {
+            // Get media before initializing WebRTC
             await startLocalStream();
+            
+            let pc = peerConnectionRef.current ?? initializeWebRTCConnection();
+            peerConnectionRef.current = pc;
+            setIsCalling(true);
+    
+            console.log("📞 Creating WebRTC Offer...");
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
     
+            console.log("🚀 Sending WebRTC Offer to:", callPartnerUsername);
             await signalRHandler.sendMessageThroughConnection(
                 connection,
                 'SendOffer',
                 callPartnerUsername,
                 offer
             );
-
+    
         } catch (error) {
-            console.error('Failed to start call:', error);
+            console.error('❌ Failed to start call:', error);
         }
     }, [callPartnerUsername, startLocalStream, initializeWebRTCConnection]);
     
@@ -340,10 +375,12 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         const pc = peerConnectionRef.current;
 
         if (!pc) {
-            console.warn('PeerConnection not ready, queuing ICE Candidate:', candidate);
+            console.warn('⚠️ PeerConnection not ready, queuing ICE Candidate:', candidate);
             setIceCandidateQueue((prevQueue) => [...prevQueue, candidate]);
             return;
         }
+
+        console.log("📡 Adding ICE Candidate:", candidate);
     
         // Validate candidate
         if (!candidate || !candidate.candidate || candidate.sdpMid === null || candidate.sdpMLineIndex === null) {
