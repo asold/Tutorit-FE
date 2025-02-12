@@ -272,7 +272,15 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             // 🔥 Ensure tracks are added
             if (localVideoRef.current?.srcObject) {
                 (localVideoRef.current.srcObject as MediaStream).getTracks().forEach(track => {
-                    pc.addTrack(track, localVideoRef.current!.srcObject as MediaStream);
+                    const senders = pc.getSenders();
+                    const alreadyAdded = senders.some(sender => sender.track === track);
+    
+                    if (!alreadyAdded && localVideoRef.current) {
+                        console.log("📡 Adding local track:", track.kind);
+                        pc.addTrack(track, localVideoRef.current.srcObject as MediaStream);
+                    } else {
+                        console.warn("⚠️ Track already added:", track.kind);
+                    }
                 });
             }
 
@@ -304,6 +312,12 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         if (!incomingOffer?.offer) {
             console.error('No incoming offer available');
             return;
+        }
+
+        // 🔥 Ensure `callerUsername` is set before accepting the offer
+        if (!callerUsername && incomingOffer.senderUsername) {
+            console.log("📌 Setting callerUsername:", incomingOffer.senderUsername);
+            setCallerUsername(incomingOffer.senderUsername);
         }
 
         try {
