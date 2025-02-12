@@ -225,7 +225,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             console.error('Error accessing media devices:', error);
             setMediaError('Please grant camera and microphone access for the call to work.');
         }
-    }, [peerConnectionRef.current]);
+    }, []);
 
 
     // 📞 **Handle Call Start**
