@@ -296,50 +296,45 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         }
     }, [callPartnerUsername, startLocalStream, initializeWebRTCConnection]);
     
+    const processIceCandidateQueue = useCallback(async () => {
+        const pc = peerConnectionRef.current;
+        if (!pc) return;
+    
+        if (iceCandidateQueue.length > 0) {
+            console.log('Processing queued ICE candidates:', iceCandidateQueue.length);
+            for (const candidate of iceCandidateQueue) {
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                } catch (error) {
+                    console.error('Failed to add queued ICE candidate:', error);
+                }
+            }
+            setIceCandidateQueue([]); // Clear the queue after processing
+        }
+    }, [iceCandidateQueue]);
 
    // ✅ **Accept Offer**
     const handleAcceptOffer = useCallback(async () => {
-        let pc = peerConnectionRef.current;
-        if (!pc) {
-            pc = initializeWebRTCConnection();
-            peerConnectionRef.current = pc;
-        }
-
         if (!incomingOffer?.offer) {
-            console.error('No incoming offer available');
+            console.error("❌ No incoming offer available");
             return;
         }
 
         try {
             console.log("🎥 Requesting media access...");
-            await startLocalStream();
+            await startLocalStream(); // Ensure media permissions are granted
 
-            // ✅ Ensure `callerUsername` is set
-        if (!callerUsername && incomingOffer.senderUsername) {
+            console.log("✅ Initializing WebRTC Connection...");
+            const pc = initializeWebRTCConnection();
+            peerConnectionRef.current = pc;
+
             console.log("📌 Setting callerUsername:", incomingOffer.senderUsername);
             setCallerUsername(incomingOffer.senderUsername);
-        }
 
             console.log("✅ Setting Remote Description with received offer...");
             await pc.setRemoteDescription(new RTCSessionDescription(incomingOffer.offer));
 
-            // // 🔥 Prevent duplicate track addition
-            // if (localVideoRef.current?.srcObject) {
-            //     const localStream = localVideoRef.current.srcObject as MediaStream;
-
-            //     localStream.getTracks().forEach(track => {
-            //         const senders = pc.getSenders();
-            //         const alreadyAdded = senders.some(sender => sender.track === track);
-
-            //         if (!alreadyAdded) {
-            //             console.log("📡 Adding local track:", track.kind);
-            //             pc.addTrack(track, localStream);
-            //         } else {
-            //             console.warn("⚠️ Track already added:", track.kind);
-            //         }
-            //     });
-            // }
-                    // 🔥 Ensure tracks are added BEFORE sending an answer
+            console.log("🎥 Adding local video/audio tracks...");
             if (localVideoRef.current?.srcObject) {
                 const localStream = localVideoRef.current.srcObject as MediaStream;
                 localStream.getTracks().forEach(track => {
@@ -351,27 +346,30 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                 });
             }
 
+            console.log("✅ Creating SDP answer...");
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
 
+            console.log("🚀 Sending SDP answer to:", incomingOffer.senderUsername);
             if (connection) {
                 await signalRHandler.sendMessageThroughConnection(
                     connection,
                     'SendAnswer',
-                    callerUsername,
+                    incomingOffer.senderUsername,
                     answer
                 );
             }
 
-            // ✅ Process ICE Candidate Queue
+            console.log("🔄 Processing queued ICE candidates...");
             await processIceCandidateQueue();
 
             setIsReceiving(true);
             setShowModal(false);
         } catch (error) {
-            console.error('Failed to accept offer:', error);
+            console.error("❌ Failed to accept offer:", error);
         }
-    }, [connection, incomingOffer, startLocalStream, iceCandidateQueue]);
+    }, [connection, incomingOffer, startLocalStream, processIceCandidateQueue]);
+
 
     
 
@@ -473,22 +471,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         }
     }, [iceCandidateQueue]);
     
-    const processIceCandidateQueue = useCallback(async () => {
-        const pc = peerConnectionRef.current;
-        if (!pc) return;
-    
-        if (iceCandidateQueue.length > 0) {
-            console.log('Processing queued ICE candidates:', iceCandidateQueue.length);
-            for (const candidate of iceCandidateQueue) {
-                try {
-                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
-                } catch (error) {
-                    console.error('Failed to add queued ICE candidate:', error);
-                }
-            }
-            setIceCandidateQueue([]); // Clear the queue after processing
-        }
-    }, [iceCandidateQueue]);
+
     
 
     return (
