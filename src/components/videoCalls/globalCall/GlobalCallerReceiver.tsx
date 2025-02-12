@@ -138,27 +138,59 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
         });
         peerConnectionRef.current = pc;
-    
-        // ✅ Log ICE connection state changes
+
+        // Log ICE connection state changes
         pc.oniceconnectionstatechange = () => {
             console.log(`ICE Connection State: ${pc.iceConnectionState}`);
         };
     
-        // ✅ Ensure remote tracks are received and set
+        // this is sending the ice candidate to the other user
+        pc.onicecandidate = (event) => {
+            if (event.candidate && connection) {
+                const candidateData = {
+                    candidate: event.candidate.candidate,
+                    sdpMid: event.candidate.sdpMid,
+                    sdpMLineIndex: event.candidate.sdpMLineIndex,
+                    usernameFragment: event.candidate.usernameFragment,
+                };
+                
+                // Resolve partner username correctly
+                const targetUsername = callPartnerUsername || callerUsername || "";
+
+                console.log("CallPartnerUsername: the one from the caller", callPartnerUsername);
+                console.log("CallerUsername: the one from the receiver", callerUsername);
+
+                if (!targetUsername) {
+                    console.error('No valid callPartnerUsername or senderUsername found. ICE Candidate cannot be sent.');
+                    return;
+                }
+
+                signalRHandler.sendMessageThroughConnection(
+                    connection,
+                    'SendICECandidate',
+                    targetUsername,
+                    candidateData
+                );
+            } else if (!event.candidate) {
+            }
+        };
+        
         pc.ontrack = (event) => {
-            console.log("🎥 Received remote track:", event.track.kind, event.streams[0]);
-    
+
+            console.log("🎥 Received track:", event.track.kind, event.streams[0]);
+
             if (!event.streams[0]) {
                 console.warn("⚠️ No streams in ontrack event!");
                 return;
             }
-    
-            // Ensure remoteVideoRef is set
+            
             if (remoteVideoRef.current) {
+                // Ensure the remote video stream is set once
                 if (!remoteVideoRef.current.srcObject) {
                     console.log("🔄 Assigning remote stream to video element");
                     remoteVideoRef.current.srcObject = event.streams[0];
                 } else {
+                    // Add new tracks if they aren't already in the stream
                     console.log("➕ Adding new track to existing stream");
                     const remoteStream = remoteVideoRef.current.srcObject as MediaStream;
                     event.streams[0].getTracks().forEach(track => {
@@ -171,10 +203,24 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                 console.warn("⚠️ Remote video ref is null, cannot set stream");
             }
         };
-    
+        
+
+        pc.oniceconnectionstatechange = () => {
+            switch (pc.iceConnectionState) {
+                case 'connected':
+                case 'completed':
+                    break;
+                case 'failed':
+                case 'disconnected':
+                case 'closed':
+                    console.warn('ICE Connection failed, disconnected, or closed');
+                    break;
+                default:
+            }
+        };
+            
         return pc;
-    }, []);
-    
+    }, [connection, callPartnerUsername, remoteVideoRef.current]);
     
     // const startLocalStream = useCallback(async () => {
     //     let audioAccess = true;
@@ -255,20 +301,22 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         }
     
         try {
+            // Get media before initializing WebRTC
             await startLocalStream();
-    
+            
             let pc = peerConnectionRef.current ?? initializeWebRTCConnection();
             peerConnectionRef.current = pc;
+            setIsCalling(true);
     
             console.log("📞 Creating WebRTC Offer...");
-    
+
             // 🔥 Ensure tracks are added
             if (localVideoRef.current?.srcObject) {
                 (localVideoRef.current.srcObject as MediaStream).getTracks().forEach(track => {
                     pc.addTrack(track, localVideoRef.current!.srcObject as MediaStream);
                 });
             }
-    
+
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
     
@@ -285,57 +333,57 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         }
     }, [callPartnerUsername, startLocalStream, initializeWebRTCConnection]);
     
-    
 
    // ✅ **Accept Offer**
-   const handleAcceptOffer = useCallback(async () => {
-    let pc = peerConnectionRef.current;
-    if (!pc) {
-        pc = initializeWebRTCConnection();
-        peerConnectionRef.current = pc;
-    }
-
-    if (!incomingOffer?.offer) {
-        console.error('No incoming offer available');
-        return;
-    }
-
-    try {
-        await startLocalStream();
-
-        console.log("✅ Setting Remote Description with received offer...");
-        await pc.setRemoteDescription(new RTCSessionDescription(incomingOffer.offer));
-
-        // 🔥 Ensure local tracks are added before creating answer
-        if (localVideoRef.current?.srcObject) {
-            (localVideoRef.current.srcObject as MediaStream).getTracks().forEach(track => {
-                pc.addTrack(track, localVideoRef.current!.srcObject as MediaStream);
-            });
+    const handleAcceptOffer = useCallback(async () => {
+        let pc = peerConnectionRef.current;
+        if (!pc) {
+            pc = initializeWebRTCConnection();
+            peerConnectionRef.current = pc;
         }
 
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-
-        if (connection) {
-            console.log("🚀 Sending SDP Answer to:", callerUsername);
-            await signalRHandler.sendMessageThroughConnection(
-                connection,
-                'SendAnswer',
-                callerUsername,
-                answer
-            );
+        if (!incomingOffer?.offer) {
+            console.error('No incoming offer available');
+            return;
         }
 
-        // ✅ Process ICE Candidate Queue
-        await processIceCandidateQueue();
+        try {
+            await startLocalStream();
 
-        setIsReceiving(true);
-        setShowModal(false);
-    } catch (error) {
-        console.error('❌ Failed to accept offer:', error);
-    }
-}, [connection, incomingOffer, startLocalStream, iceCandidateQueue]);
+            console.log("✅ Setting Remote Description with received offer...");
+            await pc.setRemoteDescription(new RTCSessionDescription(incomingOffer.offer));
 
+            // 🔥 Ensure local tracks are added before creating answer
+            if (localVideoRef.current?.srcObject) {
+                (localVideoRef.current.srcObject as MediaStream).getTracks().forEach(track => {
+                    pc.addTrack(track, localVideoRef.current!.srcObject as MediaStream);
+                });
+            }
+
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+
+            if (connection) {
+                await signalRHandler.sendMessageThroughConnection(
+                    connection,
+                    'SendAnswer',
+                    callerUsername,
+                    answer
+                );
+            }
+
+            // ✅ Process ICE Candidate Queue
+            await processIceCandidateQueue();
+
+
+            setIsReceiving(true);
+            setShowModal(false);
+        } catch (error) {
+            console.error('Failed to accept offer:', error);
+        }
+    }, [connection, incomingOffer, startLocalStream, iceCandidateQueue
+        // ,callerUsername
+    ]);
 
     
 
