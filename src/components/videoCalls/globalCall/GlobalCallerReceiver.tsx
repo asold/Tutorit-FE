@@ -184,26 +184,25 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                 return;
             }
             
-            if (remoteVideoRef.current) {
-                // Ensure the remote video stream is set once
-                if (!remoteVideoRef.current.srcObject) {
-                    console.log("🔄 Assigning remote stream to video element");
-                    remoteVideoRef.current.srcObject = event.streams[0];
+            if (event.track.kind === "video") {
+                console.log("🔄 Assigning remote video stream...");
+                if (remoteVideoRef.current) {
+                    if (!remoteVideoRef.current.srcObject) {
+                        console.log("✅ Setting remote video srcObject");
+                        remoteVideoRef.current.srcObject = event.streams[0];
+                    } else {
+                        console.log("➕ Adding new video track to existing stream");
+                        const remoteStream = remoteVideoRef.current.srcObject as MediaStream;
+                        event.streams[0].getTracks().forEach(track => {
+                            if (!remoteStream.getTracks().includes(track)) {
+                                remoteStream.addTrack(track);
+                            }
+                        });
+                        remoteVideoRef.current.load();
+                    }
                 } else {
-                    // Add new tracks if they aren't already in the stream
-                    console.log("➕ Adding new track to existing stream");
-                    const remoteStream = remoteVideoRef.current.srcObject as MediaStream;
-
-                    event.streams[0].getTracks().forEach(track => {
-                        if (!remoteStream.getTracks().includes(track)) {
-                            remoteStream.addTrack(track);
-                        }
-                    });
-
-                    remoteVideoRef.current.load();
+                    console.warn("⚠️ Remote video ref is null, cannot set stream");
                 }
-            } else {
-                console.warn("⚠️ Remote video ref is null, cannot set stream");
             }
         };
         
