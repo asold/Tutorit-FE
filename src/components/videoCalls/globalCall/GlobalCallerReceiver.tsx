@@ -208,12 +208,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         return pc;
     }, [connection, callPartnerUsername, remoteVideoRef.current]);
     
-    // 🔄 **Refresh Component**
-    const refreshComponent = useCallback(() => {
-        console.log("Refreshing the component after callEnd message!!")
-        setCallStopped(true);
-    }, [callStopped]);
-
     const startLocalStream = useCallback(async () => {
         let audioAccess = true;
         let videoAccess = true;
@@ -407,16 +401,13 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     
         try {
             await pc.setRemoteDescription(new RTCSessionDescription(answer));
-            console.log('SDP Answer successfully set as Remote Description with pc:', pc, "and answer: ", answer);
     
             // Process queued ICE candidates after SDP setup
             if (iceCandidateQueue.length > 0) {
-                console.log('Processing queued ICE candidates:', iceCandidateQueue.length);
                 for (const candidate of iceCandidateQueue) {
                     if (candidate && candidate.candidate && candidate.sdpMid !== null && candidate.sdpMLineIndex !== null) {
                         try {
                             await pc.addIceCandidate(new RTCIceCandidate(candidate));
-                            console.log('Queued ICE Candidate added successfully:', candidate);
                         } catch (error) {
                             console.error('Failed to add queued ICE candidate:', error, candidate);
                         }
