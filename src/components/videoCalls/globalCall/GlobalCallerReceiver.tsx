@@ -193,11 +193,14 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                     // Add new tracks if they aren't already in the stream
                     console.log("➕ Adding new track to existing stream");
                     const remoteStream = remoteVideoRef.current.srcObject as MediaStream;
+
                     event.streams[0].getTracks().forEach(track => {
                         if (!remoteStream.getTracks().includes(track)) {
                             remoteStream.addTrack(track);
                         }
                     });
+
+                    remoteVideoRef.current.load();
                 }
             } else {
                 console.warn("⚠️ Remote video ref is null, cannot set stream");
@@ -353,10 +356,20 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             console.log("✅ Setting Remote Description with received offer...");
             await pc.setRemoteDescription(new RTCSessionDescription(incomingOffer.offer));
 
-            // 🔥 Ensure local tracks are added before creating answer
+            // 🔥 Prevent duplicate track addition
             if (localVideoRef.current?.srcObject) {
-                (localVideoRef.current.srcObject as MediaStream).getTracks().forEach(track => {
-                    pc.addTrack(track, localVideoRef.current!.srcObject as MediaStream);
+                const localStream = localVideoRef.current.srcObject as MediaStream;
+
+                localStream.getTracks().forEach(track => {
+                    const senders = pc.getSenders();
+                    const alreadyAdded = senders.some(sender => sender.track === track);
+
+                    if (!alreadyAdded) {
+                        console.log("📡 Adding local track:", track.kind);
+                        pc.addTrack(track, localStream);
+                    } else {
+                        console.warn("⚠️ Track already added:", track.kind);
+                    }
                 });
             }
 
@@ -374,7 +387,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
 
             // ✅ Process ICE Candidate Queue
             await processIceCandidateQueue();
-
 
             setIsReceiving(true);
             setShowModal(false);
