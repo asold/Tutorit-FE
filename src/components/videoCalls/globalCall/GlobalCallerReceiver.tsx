@@ -269,17 +269,14 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     
             console.log("📞 Creating WebRTC Offer...");
 
-            // 🔥 Ensure tracks are added
+            // 🔥 Ensure tracks are added BEFORE creating an offer
             if (localVideoRef.current?.srcObject) {
-                (localVideoRef.current.srcObject as MediaStream).getTracks().forEach(track => {
+                const localStream = localVideoRef.current.srcObject as MediaStream;
+                localStream.getTracks().forEach(track => {
                     const senders = pc.getSenders();
-                    const alreadyAdded = senders.some(sender => sender.track === track);
-    
-                    if (!alreadyAdded && localVideoRef.current) {
+                    if (!senders.some(sender => sender.track === track)) {
                         console.log("📡 Adding local track:", track.kind);
-                        pc.addTrack(track, localVideoRef.current.srcObject as MediaStream);
-                    } else {
-                        console.warn("⚠️ Track already added:", track.kind);
+                        pc.addTrack(track, localStream);
                     }
                 });
             }
@@ -314,31 +311,43 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             return;
         }
 
-        // // 🔥 Ensure `callerUsername` is set before accepting the offer
-        // if (!callerUsername && incomingOffer.senderUsername) {
-        //     console.log("📌 Setting callerUsername:", incomingOffer.senderUsername);
-        //     setCallerUsername(incomingOffer.senderUsername);
-        // }
-
         try {
+            console.log("🎥 Requesting media access...");
             await startLocalStream();
+
+            // ✅ Ensure `callerUsername` is set
+        if (!callerUsername && incomingOffer.senderUsername) {
+            console.log("📌 Setting callerUsername:", incomingOffer.senderUsername);
+            setCallerUsername(incomingOffer.senderUsername);
+        }
 
             console.log("✅ Setting Remote Description with received offer...");
             await pc.setRemoteDescription(new RTCSessionDescription(incomingOffer.offer));
 
-            // 🔥 Prevent duplicate track addition
+            // // 🔥 Prevent duplicate track addition
+            // if (localVideoRef.current?.srcObject) {
+            //     const localStream = localVideoRef.current.srcObject as MediaStream;
+
+            //     localStream.getTracks().forEach(track => {
+            //         const senders = pc.getSenders();
+            //         const alreadyAdded = senders.some(sender => sender.track === track);
+
+            //         if (!alreadyAdded) {
+            //             console.log("📡 Adding local track:", track.kind);
+            //             pc.addTrack(track, localStream);
+            //         } else {
+            //             console.warn("⚠️ Track already added:", track.kind);
+            //         }
+            //     });
+            // }
+                    // 🔥 Ensure tracks are added BEFORE sending an answer
             if (localVideoRef.current?.srcObject) {
                 const localStream = localVideoRef.current.srcObject as MediaStream;
-
                 localStream.getTracks().forEach(track => {
                     const senders = pc.getSenders();
-                    const alreadyAdded = senders.some(sender => sender.track === track);
-
-                    if (!alreadyAdded) {
+                    if (!senders.some(sender => sender.track === track)) {
                         console.log("📡 Adding local track:", track.kind);
                         pc.addTrack(track, localStream);
-                    } else {
-                        console.warn("⚠️ Track already added:", track.kind);
                     }
                 });
             }
@@ -363,9 +372,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         } catch (error) {
             console.error('Failed to accept offer:', error);
         }
-    }, [connection, incomingOffer, startLocalStream, iceCandidateQueue
-        // ,callerUsername
-    ]);
+    }, [connection, incomingOffer, startLocalStream, iceCandidateQueue]);
 
     
 
@@ -386,6 +393,9 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         }
 
         console.log("📡 Adding ICE Candidate:", candidate);
+        console.log(" - CallPartnerUsername:", callPartnerUsername);
+        console.log(" - CallerUsername:", callerUsername);
+
     
         // Validate candidate
         if (!candidate || !candidate.candidate || candidate.sdpMid === null || candidate.sdpMLineIndex === null) {
