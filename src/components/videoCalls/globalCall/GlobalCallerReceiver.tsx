@@ -314,11 +314,11 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             return;
         }
 
-        // 🔥 Ensure `callerUsername` is set before accepting the offer
-        if (!callerUsername && incomingOffer.senderUsername) {
-            console.log("📌 Setting callerUsername:", incomingOffer.senderUsername);
-            setCallerUsername(incomingOffer.senderUsername);
-        }
+        // // 🔥 Ensure `callerUsername` is set before accepting the offer
+        // if (!callerUsername && incomingOffer.senderUsername) {
+        //     console.log("📌 Setting callerUsername:", incomingOffer.senderUsername);
+        //     setCallerUsername(incomingOffer.senderUsername);
+        // }
 
         try {
             await startLocalStream();
