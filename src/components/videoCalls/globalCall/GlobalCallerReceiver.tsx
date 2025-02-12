@@ -157,8 +157,8 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                 // Resolve partner username correctly
                 const targetUsername = callPartnerUsername || callerUsername || "";
 
-                console.log("CallPartnerUsername: the one from the caller", callPartnerUsername);
-                console.log("CallerUsername: the one from the receiver", callerUsername);
+                console.log("CallPartnerUsername:   ", callPartnerUsername);
+                console.log("CallerUsername:", callerUsername);
 
                 if (!targetUsername) {
                     console.error('No valid callPartnerUsername or senderUsername found. ICE Candidate cannot be sent.');
@@ -225,51 +225,7 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         return pc;
     }, [connection, callPartnerUsername, remoteVideoRef.current]);
     
-    // const startLocalStream = useCallback(async () => {
-    //     let audioAccess = true;
-    //     let videoAccess = true;
-    
-    //     try {
-    //         // Check for Video and Audio access individually
-    //         const videoStream = await navigator.mediaDevices.getUserMedia({ video: true }).catch((error) => {
-    //             console.error('Video access denied:', error);
-    //             videoAccess = false;
-    //         });
-    
-    //         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch((error) => {
-    //             console.error('Audio access denied:', error);
-    //             audioAccess = false;
-    //         });
-    
-    //         // Combine Streams if both exist
-    //         if (audioAccess && videoAccess) {
-    //             const combinedStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    //             if (localVideoRef.current) {
-    //                 localVideoRef.current.srcObject = combinedStream;
-    //             }
-    
-    //             combinedStream.getTracks().forEach((track) => {
-    //                 peerConnectionRef.current?.addTrack(track, combinedStream);
-    //             });
-    //         } else {
-    //             // Handle specific errors
-    //             let errorMessage = 'Failed to access: ';
-    //             if (!audioAccess && !videoAccess) {
-    //                 errorMessage += 'Microphone and Camera.';
-    //             } else if (!audioAccess) {
-    //                 errorMessage += 'Microphone.';
-    //             } else if (!videoAccess) {
-    //                 errorMessage += 'Camera.';
-    //             }
-    
-    //             setMediaError(errorMessage);
-    //             console.warn(errorMessage);
-    //         }
-    //     } catch (error) {
-    //         console.error('Unexpected error while starting local stream:', error);
-    //         setMediaError('Unexpected error accessing media devices.');
-    //     }
-    // }, [peerConnectionRef.current]);
+
     const startLocalStream = useCallback(async () => {
         try {
             // Request media stream
