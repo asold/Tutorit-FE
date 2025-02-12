@@ -209,48 +209,21 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
     }, [connection, callPartnerUsername, remoteVideoRef.current]);
     
     const startLocalStream = useCallback(async () => {
-        let audioAccess = true;
-        let videoAccess = true;
-    
         try {
-            // Check for Video and Audio access individually
-            const videoStream = await navigator.mediaDevices.getUserMedia({ video: true }).catch((error) => {
-                console.error('Video access denied:', error);
-                videoAccess = false;
-            });
+            // Ensure both audio and video permissions are requested together
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     
-            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch((error) => {
-                console.error('Audio access denied:', error);
-                audioAccess = false;
-            });
-    
-            // Combine Streams if both exist
-            if (audioAccess && videoAccess) {
-                const combinedStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                if (localVideoRef.current) {
-                    localVideoRef.current.srcObject = combinedStream;
-                }
-    
-                combinedStream.getTracks().forEach((track) => {
-                    peerConnectionRef.current?.addTrack(track, combinedStream);
-                });
-            } else {
-                // Handle specific errors
-                let errorMessage = 'Failed to access: ';
-                if (!audioAccess && !videoAccess) {
-                    errorMessage += 'Microphone and Camera.';
-                } else if (!audioAccess) {
-                    errorMessage += 'Microphone.';
-                } else if (!videoAccess) {
-                    errorMessage += 'Camera.';
-                }
-    
-                setMediaError(errorMessage);
-                console.warn(errorMessage);
+            if (localVideoRef.current) {
+                localVideoRef.current.srcObject = stream;
             }
+    
+            stream.getTracks().forEach(track => {
+                peerConnectionRef.current?.addTrack(track, stream);
+            });
+    
         } catch (error) {
-            console.error('Unexpected error while starting local stream:', error);
-            setMediaError('Unexpected error accessing media devices.');
+            console.error('Error accessing media devices:', error);
+            setMediaError('Please grant camera and microphone access for the call to work.');
         }
     }, [peerConnectionRef.current]);
 
@@ -262,12 +235,14 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
             return;
         }
     
-        let pc = peerConnectionRef.current ?? initializeWebRTCConnection();
-        peerConnectionRef.current = pc;
-        setIsCalling(true);
-    
         try {
+            // Wait for the media stream before initializing WebRTC
             await startLocalStream();
+            
+            let pc = peerConnectionRef.current ?? initializeWebRTCConnection();
+            peerConnectionRef.current = pc;
+            setIsCalling(true);
+    
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
     
@@ -277,11 +252,12 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
                 callPartnerUsername,
                 offer
             );
-
+    
         } catch (error) {
             console.error('Failed to start call:', error);
         }
     }, [callPartnerUsername, startLocalStream, initializeWebRTCConnection]);
+    
     
 
    // ✅ **Accept Offer**
@@ -427,7 +403,6 @@ const GlobalCallerReceiver: React.FC<GlobalCallerReceiverProps> = ({ token, call
         if (!pc) return;
     
         if (iceCandidateQueue.length > 0) {
-            console.log('Processing queued ICE candidates:', iceCandidateQueue.length);
             for (const candidate of iceCandidateQueue) {
                 try {
                     await pc.addIceCandidate(new RTCIceCandidate(candidate));
