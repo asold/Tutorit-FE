@@ -78,6 +78,9 @@ const LoginComponent: React.FC = () => {
     if (response === 'Student') {
       navigate('/student_main');
     }
+    else{
+      alert("Invalid username or password")
+    }
   };
 
   return (

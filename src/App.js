@@ -13,6 +13,7 @@ import PrivateRoute from './common/PrivateRoute.tsx';
 import TutorCourseDetails from './components/course/tutor/TutorCourseDetails.tsx'
 import IncommingCallHandler from './components/videoCalls/globalCall/IncommingCallHandler.tsx'
 import CallerReceiverBox from './components/videoCalls/globalCall/CallerReceiverBox.tsx';
+import TutorItLanding from './components/landingPage/TutorItLanding.tsx';
 function App() {
   return (
     <Router>
@@ -29,7 +30,8 @@ function App() {
           <Route path="/teacher_main" element={<PrivateRoute><TeacherMainPage /></PrivateRoute>} />
           <Route path="/student_main" element={<PrivateRoute><StudentMain /></PrivateRoute>} />
           <Route index element={<Navigate to="/login" />} />
-          <Route path="/courseDetails/:courseId" element={<TutorCourseDetails />} /> {/* Add this route */}
+          <Route path="/courseDetails/:courseId" element={<TutorCourseDetails />} />
+          <Route path="/landing_page" element={<TutorItLanding/>}/>
         </Routes>
       </div>
     </Router>
