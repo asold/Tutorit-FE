@@ -18,9 +18,9 @@ function App() {
   return (
     <Router>
       <div>
-        <LanguageSwitcher />
-        <IncommingCallHandler/>
-        <CallerReceiverBox/>
+        {/* <LanguageSwitcher /> */}
+        {/* <IncommingCallHandler/> */}
+        {/* <CallerReceiverBox/> */}
 
         <Routes>
           <Route path="/login" element={<LoginComponent />} />
@@ -29,9 +29,9 @@ function App() {
           <Route path="/user-creation" element={<UserRegistarion />} />
           <Route path="/teacher_main" element={<PrivateRoute><TeacherMainPage /></PrivateRoute>} />
           <Route path="/student_main" element={<PrivateRoute><StudentMain /></PrivateRoute>} />
-          <Route index element={<Navigate to="/login" />} />
           <Route path="/courseDetails/:courseId" element={<TutorCourseDetails />} />
           <Route path="/landing_page" element={<TutorItLanding/>}/>
+          <Route index element={<Navigate to="/landing_page" />} />
         </Routes>
       </div>
     </Router>

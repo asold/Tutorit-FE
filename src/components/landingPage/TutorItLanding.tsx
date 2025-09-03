@@ -22,6 +22,8 @@ import {
   Rating,
 } from "@mui/material"
 import { BookOpen, Video, Calendar, CreditCard, Users, CheckCircle } from "lucide-react"
+import { SERVER_ADDRESS } from "../../common/constants.ts"
+
 
 interface SignupData {
   user_email: string
@@ -31,23 +33,24 @@ interface SignupData {
   role: "tutor" | "student" | ""
 }
 
-const topics = [
-  "Mathematics",
-  "Physics",
-  "Chemistry",
-  "Biology",
-  "Computer Science",
-  "English Literature",
-  "History",
-  "Geography",
-  "Economics",
-  "Psychology",
-  "Art",
-  "Music",
-  "Languages",
-  "Philosophy",
-  "Engineering",
-]
+interface Label{
+  id: string
+  name: string
+}
+
+
+async function getTopicsAsync() {
+  const res = await fetch(SERVER_ADDRESS+'/tutorit/Label')
+
+  if(!res.ok){
+    throw new Error('Failed to fetch topics')
+  }
+
+  const data: Label[] = await res.json();
+  return data.map(label=>label.name)
+}
+
+const topics = await getTopicsAsync()
 
 export default function TutorItLanding() {
   const [signupData, setSignupData] = useState<SignupData>({

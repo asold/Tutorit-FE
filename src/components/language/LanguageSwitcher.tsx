@@ -17,6 +17,7 @@ const LanguageSwitcher: React.FC = () => {
   
   // Use Redux to get the login state
   const isLoggedIn = useSelector((state: any) => state.auth.isLoggedIn);
+  console.log("Is Logged In:", isLoggedIn);
 
   useEffect(() => {
     // Sync language change in i18n to global state
