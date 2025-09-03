@@ -8,10 +8,7 @@ const initialState:LoginState = {
 }
 
 const loginReducer = (state = initialState, action:LoginAction) => {
-    
     switch(action.type){
-        
-
         case LOGIN_SUCCESS:
             localStorage.setItem('token', action.payload.token);
             localStorage.setItem('userId', action.payload.userId);

@@ -44,6 +44,7 @@ export const login =  (username: string, password: string):
                 
             }
             catch(error){
+                console.log("Not logging in")
                 await dispatch(LoginFailure(error));
         }
     }
