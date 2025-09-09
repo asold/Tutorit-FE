@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Box,
   Container,
@@ -20,10 +20,11 @@ import {
   Grid,
   Paper,
   Rating,
+  CardMedia,
 } from "@mui/material"
 import { BookOpen, Video, Calendar, CreditCard, Users, CheckCircle } from "lucide-react"
 import { SERVER_ADDRESS } from "../../common/constants.ts"
-
+import LandingLayout from "./LandingLayout.tsx"
 
 interface SignupData {
   user_email: string
@@ -33,26 +34,48 @@ interface SignupData {
   role: "tutor" | "student" | ""
 }
 
-interface Label{
+interface Label {
   id: string
   name: string
 }
 
+const defaultTopics = [
+  "Mathematics",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "Computer Science",
+  "English Literature",
+  "History",
+  "Geography",
+  "Economics",
+  "Psychology",
+  "Art & Design",
+  "Music",
+  "Foreign Languages",
+  "Philosophy",
+  "Statistics",
+]
 
-async function getTopicsAsync() {
-  const res = await fetch(SERVER_ADDRESS+'/tutorit/Label')
+async function getTopicsAsync(): Promise<string[]> {
+  try {
+    const res = await fetch(SERVER_ADDRESS + "/tutorit/Label")
 
-  if(!res.ok){
-    throw new Error('Failed to fetch topics')
+    if (!res.ok) {
+      console.log("API not available, using default topics")
+      return defaultTopics
+    }
+
+    const data: Label[] = await res.json()
+    return data.map((label) => label.name)
+  } catch (error) {
+    console.log("Failed to fetch topics from API, using defaults:", error)
+    return defaultTopics
   }
-
-  const data: Label[] = await res.json();
-  return data.map(label=>label.name)
 }
 
-const topics = await getTopicsAsync()
-
 export default function TutorItLanding() {
+  const [topics, setTopics] = useState<string[]>(defaultTopics)
   const [signupData, setSignupData] = useState<SignupData>({
     user_email: "",
     topics: [],
@@ -60,6 +83,10 @@ export default function TutorItLanding() {
     age: "",
     role: "",
   })
+
+  useEffect(() => {
+    getTopicsAsync().then(setTopics)
+  }, [])
 
   const handleTopicToggle = (topic: string) => {
     setSignupData((prev) => ({
@@ -85,28 +112,43 @@ export default function TutorItLanding() {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+    <LandingLayout>  
+      <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <Box
         sx={{
           py: 10,
           px: 2,
           textAlign: "center",
-          background: "linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(156, 39, 176, 0.05) 100%)",
+          background: `linear-gradient(135deg, rgba(25, 118, 210, 0.8) 0%, rgba(156, 39, 176, 0.8) 100%), url('/students-studying-with-laptops-and-books-in-modern.jpg')`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          color: "white",
         }}
       >
         <Container maxWidth="lg">
           <Typography
             variant="h1"
             component="h1"
-            sx={{ fontSize: { xs: "2.5rem", md: "3.5rem" }, fontWeight: "bold", mb: 3 }}
+            sx={{ fontSize: { xs: "2.5rem", md: "3.5rem" }, fontWeight: "bold", mb: 3, color: "white" }}
           >
             Connect. Learn. Excel.
           </Typography>
-          <Typography variant="h5" color="text.secondary" sx={{ mb: 4, maxWidth: "600px", mx: "auto" }}>
+          <Typography variant="h5" sx={{ mb: 4, maxWidth: "600px", mx: "auto", color: "rgba(255,255,255,0.9)" }}>
             TutorIt is the platform that connects passionate tutors with eager learners. Get personalized help on any
             topic, anytime, anywhere.
           </Typography>
-          <Button variant="contained" size="large" sx={{ px: 4, py: 1.5, fontSize: "1.1rem" }}>
+          <Button
+            variant="contained"
+            size="large"
+            sx={{
+              px: 4,
+              py: 1.5,
+              fontSize: "1.1rem",
+              bgcolor: "white",
+              color: "primary.main",
+              "&:hover": { bgcolor: "grey.100" },
+            }}
+          >
             Get Started Today
           </Button>
         </Container>
@@ -126,6 +168,12 @@ export default function TutorItLanding() {
         <Grid container spacing={4}>
           <Grid item xs={12} md={4}>
             <Card sx={{ textAlign: "center", height: "100%" }}>
+              <CardMedia
+                component="img"
+                height="200"
+                image="/images/diverse-students-connecting-online-video-call.png"
+                alt="Students connecting"
+              />
               <CardContent sx={{ p: 3 }}>
                 <Users size={48} color="#1976d2" style={{ marginBottom: "16px" }} />
                 <Typography variant="h6" fontWeight="bold" mb={2}>
@@ -140,6 +188,12 @@ export default function TutorItLanding() {
 
           <Grid item xs={12} md={4}>
             <Card sx={{ textAlign: "center", height: "100%" }}>
+              <CardMedia
+                component="img"
+                height="200"
+                image="/images/open-books-mathematics-science-subjects-colorful.jpg"
+                alt="Various subjects"
+              />
               <CardContent sx={{ p: 3 }}>
                 <BookOpen size={48} color="#1976d2" style={{ marginBottom: "16px" }} />
                 <Typography variant="h6" fontWeight="bold" mb={2}>
@@ -154,6 +208,12 @@ export default function TutorItLanding() {
 
           <Grid item xs={12} md={4}>
             <Card sx={{ textAlign: "center", height: "100%" }}>
+              <CardMedia
+                component="img"
+                height="200"
+                image="/images/calendar-schedule-planning-ongoing-lessons-progres.jpg"
+                alt="Ongoing lessons"
+              />
               <CardContent sx={{ p: 3 }}>
                 <Calendar size={48} color="#1976d2" style={{ marginBottom: "16px" }} />
                 <Typography variant="h6" fontWeight="bold" mb={2}>
@@ -186,25 +246,30 @@ export default function TutorItLanding() {
                 icon: Video,
                 title: "Video Calls",
                 desc: "High-quality video sessions with screen sharing and interactive tools.",
+                image: "/images/video-call-screen-sharing-online-tutoring-session.jpg",
               },
               {
                 icon: BookOpen,
                 title: "Virtual Notebooks",
                 desc: "Shared digital notebooks for real-time collaboration and note-taking.",
+                image: "/images/digital-notebook-collaborative-writing-notes.jpg",
               },
               {
                 icon: CheckCircle,
                 title: "Homework Tracking",
                 desc: "Assign, track, and review homework with built-in progress monitoring.",
+                image: "/images/homework-checklist-progress-tracking-assignments.jpg",
               },
               {
                 icon: Calendar,
                 title: "Smart Scheduling",
                 desc: "Integrated calendars make booking and managing sessions effortless.",
+                image: "/images/smart-calendar-scheduling-appointments-booking.jpg",
               },
             ].map((feature, index) => (
               <Grid item xs={12} sm={6} lg={3} key={index}>
                 <Card sx={{ height: "100%" }}>
+                  <CardMedia component="img" height="150" image={feature.image} alt={feature.title} />
                   <CardContent>
                     <feature.icon size={32} color="#9c27b0" style={{ marginBottom: "8px" }} />
                     <Typography variant="h6" fontWeight="bold" mb={1}>
@@ -238,20 +303,24 @@ export default function TutorItLanding() {
               icon: Video,
               title: "Video Lectures",
               desc: "Record and save your best explanations to help more students learn efficiently.",
+              image: "/images/teacher-recording-video-lecture-presentation.jpg",
             },
             {
               icon: BookOpen,
               title: "Course Creation",
               desc: "Build structured courses with lessons, assignments, and progress tracking.",
+              image: "/images/course-curriculum-structure-lessons-organized.jpg",
             },
             {
               icon: CreditCard,
               title: "Flexible Payments",
               desc: "Set your own rates and get paid securely with integrated payment processing.",
+              image: "/images/secure-payment-processing-money-earnings-rates.jpg",
             },
           ].map((feature, index) => (
             <Grid item xs={12} md={4} key={index}>
               <Card sx={{ height: "100%" }}>
+                <CardMedia component="img" height="200" image={feature.image} alt={feature.title} />
                 <CardContent>
                   <feature.icon size={40} color="#1976d2" style={{ marginBottom: "12px" }} />
                   <Typography variant="h6" fontWeight="bold" mb={2}>
@@ -275,12 +344,22 @@ export default function TutorItLanding() {
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent sx={{ p: 3 }}>
-                  <Rating value={5} readOnly sx={{ mb: 2 }} />
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                    <Box
+                      component="img"
+                      src="/young-female-student-smiling-portrait.jpg"
+                      alt="Sarah"
+                      sx={{ width: 50, height: 50, borderRadius: "50%", mr: 2 }}
+                    />
+                    <Box>
+                      <Typography fontWeight="bold">Sarah, Student</Typography>
+                      <Rating value={5} readOnly size="small" />
+                    </Box>
+                  </Box>
                   <Typography color="text.secondary" mb={2}>
                     "TutorIt helped me find the perfect math tutor. The virtual notebook feature made our sessions so
                     much more interactive!"
                   </Typography>
-                  <Typography fontWeight="bold">Sarah, Student</Typography>
                 </CardContent>
               </Card>
             </Grid>
@@ -288,18 +367,63 @@ export default function TutorItLanding() {
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent sx={{ p: 3 }}>
-                  <Rating value={5} readOnly sx={{ mb: 2 }} />
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                    <Box
+                      component="img"
+                      src="/images/middle-aged-male-professor-physics-teacher.jpg"
+                      alt="Dr. Martinez"
+                      sx={{ width: 50, height: 50, borderRadius: "50%", mr: 2 }}
+                    />
+                    <Box>
+                      <Typography fontWeight="bold">Dr. Martinez, Physics Tutor</Typography>
+                      <Rating value={5} readOnly size="small" />
+                    </Box>
+                  </Box>
                   <Typography color="text.secondary" mb={2}>
                     "As a tutor, I love how easy it is to create courses and manage payments. The platform handles
                     everything seamlessly."
                   </Typography>
-                  <Typography fontWeight="bold">Dr. Martinez, Physics Tutor</Typography>
                 </CardContent>
               </Card>
             </Grid>
           </Grid>
         </Container>
       </Paper>
+
+      <Box
+        sx={{
+          height: 300,
+          backgroundImage: `url('/images/diverse-students-and-tutors-collaborating-learning.jpg')`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(25, 118, 210, 0.7)",
+          },
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            color: "white",
+            fontWeight: "bold",
+            textAlign: "center",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          Join Thousands of Learners & Educators
+        </Typography>
+      </Box>
 
       <Container maxWidth="sm" sx={{ py: 8 }}>
         <Box textAlign="center" mb={4}>
@@ -458,6 +582,7 @@ export default function TutorItLanding() {
           </Box>
         </Container>
       </Paper>
-    </Box>
+      </Box>
+    </LandingLayout>
   )
 }

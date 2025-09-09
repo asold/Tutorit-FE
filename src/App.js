@@ -23,7 +23,7 @@ function App() {
         {/* <CallerReceiverBox/> */}
 
         <Routes>
-          {/* <Route path="/login" element={<LoginComponent />} /> */}
+          <Route path="/login" element={<LoginComponent />} />
           <Route path="/video" element={<PrivateRoute><VideoCallPage /></PrivateRoute>} />
           <Route path="/register" element={<PersonalRegistration />} />
           <Route path="/user-creation" element={<UserRegistarion />} />
