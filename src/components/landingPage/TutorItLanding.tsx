@@ -347,7 +347,7 @@ export default function TutorItLanding() {
                   <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                     <Box
                       component="img"
-                      src="/young-female-student-smiling-portrait.jpg"
+                      src="images/young-female-student-smiling-portrait.jpg"
                       alt="Sarah"
                       sx={{ width: 50, height: 50, borderRadius: "50%", mr: 2 }}
                     />
